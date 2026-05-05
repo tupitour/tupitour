@@ -623,8 +623,8 @@ h1 em { font-style: italic; color: var(--green); }
   .panel-desc { font-size: 0.83rem; }
 
   /* Calendar overlay mobile */
-  .cal-overlay { padding: 0; }
-  .cal-box { width: 100vw; max-width: 100vw; border-radius: 0; height: 100dvh; overflow-y: auto; }
+  .cal-overlay { padding: 0; align-items: flex-start; }
+  .cal-modal { width: 100vw; max-width: 100vw; border-radius: 0; height: 100dvh; max-height: 100dvh; overflow-y: auto; padding: 1.25rem 1.1rem; }
 
   /* Cart badge */
   .cart-btn { font-size: 0.72rem; }
@@ -2516,8 +2516,16 @@ function saveBlocked(arr) {
 function scrollToEl(id, delay) {
   setTimeout(function() {
     var el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, delay || 80);
+    if (!el) return;
+    // Find the scrollable parent — calOverlay on mobile, calModal on desktop
+    var isMobile = window.innerWidth < 768;
+    var container = document.getElementById(isMobile ? 'calOverlay' : 'calModal');
+    if (!container) { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); return; }
+    var elTop = el.getBoundingClientRect().top;
+    var containerTop = container.getBoundingClientRect().top;
+    var offset = container.scrollTop + elTop - containerTop - 16;
+    container.scrollTo({ top: offset, behavior: 'smooth' });
+  }, delay || 120);
 }
 
 // ── CALENDAR STATE ──
