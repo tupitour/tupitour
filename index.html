@@ -2398,50 +2398,9 @@ function sendConfirmationEmail(method) {
   }, 800);
 }
 
-async function checkout() {
+function checkout() {
   if (!cart.length) return;
-
-  var btn = document.querySelector('[onclick="checkout()"]');
-  if (btn) { btn.disabled = true; btn.textContent = 'Processing…'; }
-
-  var guestName  = (cart[0] && cart[0].guestName)  || '';
-  var guestEmail = (cart[0] && cart[0].guestEmail) || '';
-
-  var items = cart.map(function(item) {
-    return {
-      name:       item.name,
-      price:      item.price,
-      priceLabel: item.priceLabel,
-      date:       item.date  || '',
-      time:       item.time  || '',
-      group:      item.group || ''
-    };
-  });
-
-  try {
-    var res = await fetch('/.netlify/functions/create-checkout', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        items:      items,
-        guestName:  guestName,
-        guestEmail: guestEmail,
-        successUrl: window.location.origin + '/?payment=success',
-        cancelUrl:  window.location.origin + '/?payment=cancelled'
-      })
-    });
-
-    var data = await res.json();
-
-    if (data.url) {
-      window.location.href = data.url;   // Redirect to Stripe Checkout
-    } else {
-      throw new Error(data.error || 'No URL returned');
-    }
-  } catch (err) {
-    if (btn) { btn.disabled = false; btn.textContent = 'Pay via Card (Stripe)'; }
-    alert('Payment error: ' + err.message + '\nPlease try Wise or Revolut, or contact flavio@tupitour.com.');
-  }
+  alert('Stripe payment link coming soon. Please use Wise or Revolut, or contact us at flavio@tupitour.com.');
 }
 
 function openWiseInfo() {
@@ -2523,12 +2482,42 @@ cards.forEach(function(card, i) {
 });
 
 
-// ── BLOCKED DATES (stored in localStorage) ──
-function getBlocked() {
-  try { return JSON.parse(localStorage.getItem('tupitour_blocked') || '[]'); } catch(e) { return []; }
+// ── BLOCKED DATES (Supabase) ──
+var _blockedCache = null;
+var _blockedLoaded = false;
+
+async function fetchBlockedDates() {
+  if (_blockedLoaded) return _blockedCache;
+  try {
+    var res = await fetch('/.netlify/functions/blocked-dates');
+    var data = await res.json();
+    _blockedCache = Array.isArray(data) ? data : [];
+  } catch(e) {
+    _blockedCache = [];
+  }
+  _blockedLoaded = true;
+  return _blockedCache;
 }
+
+function invalidateBlockedCache() {
+  _blockedCache = null;
+  _blockedLoaded = false;
+}
+
+function getBlocked() {
+  return _blockedCache || [];
+}
+
 function saveBlocked(arr) {
-  try { localStorage.setItem('tupitour_blocked', JSON.stringify(arr)); } catch(e) {}
+  _blockedCache = arr;
+}
+
+// ── AUTO-SCROLL helper ──
+function scrollToEl(id, delay) {
+  setTimeout(function() {
+    var el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, delay || 80);
 }
 
 // ── CALENDAR STATE ──
@@ -2569,7 +2558,7 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function openCalendar(tourName) {
+async function openCalendar(tourName) {
   var t = tours[tourName];
   if (!t) return;
   calTour = tourName;
@@ -2599,6 +2588,8 @@ function openCalendar(tourName) {
     progressEl.style.display = 'none';
   }
 
+  // Fetch blocked dates from Supabase before rendering
+  await fetchBlockedDates();
   renderCalendar();
   document.getElementById('calOverlay').classList.add('open');
 }
@@ -2666,6 +2657,23 @@ function renderCalendar() {
       (function(ds) {
         el.addEventListener('click', function() { selectDate(ds); });
       })(dateStr);
+    } else if (isBlocked) {
+      (function(b) {
+        el.addEventListener('click', function() {
+          var msg = document.getElementById('calBlockedMsg');
+          if (!msg) {
+            msg = document.createElement('div');
+            msg.id = 'calBlockedMsg';
+            msg.style.cssText = 'margin:0.75rem 0 0;padding:0.75rem 1rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:0.82rem;color:var(--mid);line-height:1.5;';
+            var grid = document.getElementById('calGrid');
+            grid.parentNode.insertBefore(msg, grid.nextSibling);
+          }
+          var parts = b.split('-');
+          var label = months[parseInt(parts[1])-1] + ' ' + parseInt(parts[2]) + ', ' + parts[0];
+          msg.innerHTML = '📅 <strong>' + label + '</strong> is fully booked. <a href="mailto:flavio@tupitour.com" style="color:var(--green);text-decoration:underline;">Contact us</a> to check availability with a partner guide.';
+          msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+      })(dateStr);
     }
     grid.appendChild(el);
   }
@@ -2700,6 +2708,7 @@ function selectDate(dateStr) {
     calTime = null;
     renderCalendar();
     showTimeSlots();
+    scrollToEl('calTimeSection');
   }
 }
 
@@ -2724,6 +2733,7 @@ function selectTime(t, el) {
   document.querySelectorAll('.cal-time').forEach(function(e) { e.classList.remove('selected'); });
   el.classList.add('selected');
   showPaymentOptions();
+  scrollToEl('calPaymentOption');
 }
 
 function showPaymentOptions() {
@@ -2754,6 +2764,7 @@ function selectPaymentOption(option) {
   fullEl.style.borderColor = option === 'full' ? 'var(--green)' : 'var(--border)';
   document.getElementById('calCancellationPolicy').style.display = '';
   document.getElementById('calForm').style.display = 'flex';
+  scrollToEl('calForm');
 }
 
 function prevMonth() {
@@ -2876,10 +2887,17 @@ function goToCartFromSuccess() {
 }
 
 // ── ADMIN ──
+var ADMIN_SECRET = null;
+
 function openAdmin() {
+  if (!ADMIN_SECRET) {
+    var key = prompt('Enter admin password:');
+    if (!key) return;
+    ADMIN_SECRET = key;
+  }
   document.getElementById('adminPanel').classList.add('open');
   document.getElementById('adminOverlay').classList.add('open');
-  renderAdminList();
+  loadAdminList();
 }
 
 function closeAdmin() {
@@ -2887,32 +2905,56 @@ function closeAdmin() {
   document.getElementById('adminOverlay').classList.remove('open');
 }
 
-function blockDate() {
+async function blockDate() {
   var date = document.getElementById('adminDate').value;
   var note = document.getElementById('adminNote').value.trim();
   if (!date) { alert('Please select a date.'); return; }
-  var blocked = getBlocked();
-  if (blocked.some(function(b) { return b.date === date; })) {
-    alert('This date is already blocked.'); return;
-  }
-  blocked.push({ date: date, note: note });
-  blocked.sort(function(a,b) { return a.date.localeCompare(b.date); });
-  saveBlocked(blocked);
-  document.getElementById('adminDate').value = '';
-  document.getElementById('adminNote').value = '';
-  renderAdminList();
+  var btn = document.querySelector('.admin-block-btn');
+  btn.textContent = 'Blocking...'; btn.disabled = true;
+  try {
+    var res = await fetch('/.netlify/functions/blocked-dates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_SECRET },
+      body: JSON.stringify({ date: date, note: note, source: 'manual' })
+    });
+    if (res.status === 401) { ADMIN_SECRET = null; alert('Wrong password.'); btn.textContent = 'Block this date'; btn.disabled = false; return; }
+    invalidateBlockedCache();
+    document.getElementById('adminDate').value = '';
+    document.getElementById('adminNote').value = '';
+    await loadAdminList();
+  } catch(e) { alert('Error: ' + e.message); }
+  btn.textContent = 'Block this date'; btn.disabled = false;
 }
 
-function unblockDate(date) {
-  var blocked = getBlocked().filter(function(b) { return b.date !== date; });
-  saveBlocked(blocked);
-  renderAdminList();
+async function unblockDate(date) {
+  try {
+    await fetch('/.netlify/functions/blocked-dates', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_SECRET },
+      body: JSON.stringify({ date: date })
+    });
+    invalidateBlockedCache();
+    await loadAdminList();
+  } catch(e) { alert('Error: ' + e.message); }
 }
 
-function renderAdminList() {
-  var blocked = getBlocked();
+async function loadAdminList() {
   var el = document.getElementById('adminBlockedList');
-  if (blocked.length === 0) {
+  el.innerHTML = '<div class="admin-empty">Loading...</div>';
+  try {
+    var res = await fetch('/.netlify/functions/blocked-dates');
+    var blocked = await res.json();
+    saveBlocked(blocked);
+    renderAdminList(blocked);
+  } catch(e) {
+    el.innerHTML = '<div class="admin-empty">Error loading dates.</div>';
+  }
+}
+
+function renderAdminList(blocked) {
+  if (!blocked) blocked = getBlocked();
+  var el = document.getElementById('adminBlockedList');
+  if (!blocked || blocked.length === 0) {
     el.innerHTML = '<div class="admin-empty">No dates blocked yet.</div>';
     return;
   }
@@ -2922,8 +2964,9 @@ function renderAdminList() {
     item.className = 'admin-blocked-item';
     var parts = b.date.split('-');
     var label = months[parseInt(parts[1])-1] + ' ' + parseInt(parts[2]) + ', ' + parts[0];
+    var source = b.source === 'stripe' ? ' <span style="font-size:0.68rem;color:var(--green);font-weight:500;">STRIPE</span>' : '';
     var leftDiv = document.createElement('div');
-    leftDiv.innerHTML = '<div class="admin-blocked-date">' + label + '</div>' +
+    leftDiv.innerHTML = '<div class="admin-blocked-date">' + label + source + '</div>' +
       (b.note ? '<div class="admin-blocked-note">' + b.note + '</div>' : '');
     var unbtn = document.createElement('button');
     unbtn.className = 'admin-unblock';
@@ -3362,7 +3405,7 @@ var TOUR_CAROUSELS = {
     </div>
     <div id="checkoutOptions" style="display:none;margin-top:0.75rem;display:none;flex-direction:column;gap:0.5rem;">
       <div style="font-size:0.72rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--light);margin-bottom:0.25rem;">Choose how to pay</div>
-      <button class="btn-checkout" onclick="checkout()">Pay via Card (Stripe)</button>
+      <button class="btn-checkout" onclick="checkout()">Pay via Stripe</button>
       <button class="btn-checkout" onclick="openWiseInfo()" style="background:#9FE870;color:#163300;">Pay via Wise</button>
       <div id="wiseInfo" style="display:none;margin-top:0.5rem;padding:0.85rem;background:var(--bg);border:1px solid var(--border);border-radius:2px;">
         <div style="font-size:0.72rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--light);margin-bottom:0.4rem;">Wise</div>
@@ -3379,7 +3422,7 @@ var TOUR_CAROUSELS = {
       </div>
       <button class="btn-checkout" style="background:var(--bg);color:var(--mid);border:1px solid var(--border);font-size:0.78rem;" onclick="closeCheckoutOptions()">&#8592; Back</button>
     </div>
-    <p class="cart-note">Secure payment &middot; Card via Stripe &middot; Wise &middot; Revolut</p>
+    <p class="cart-note">Confirmation within 24h &middot; Stripe &middot; Wise &middot; Revolut</p>
   </div>
 </div>
 
