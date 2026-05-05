@@ -2398,9 +2398,50 @@ function sendConfirmationEmail(method) {
   }, 800);
 }
 
-function checkout() {
+async function checkout() {
   if (!cart.length) return;
-  alert('Stripe payment link coming soon. Please use Wise or Revolut, or contact us at flavio@tupitour.com.');
+
+  var btn = document.querySelector('[onclick="checkout()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Processing…'; }
+
+  var guestName  = (cart[0] && cart[0].guestName)  || '';
+  var guestEmail = (cart[0] && cart[0].guestEmail) || '';
+
+  var items = cart.map(function(item) {
+    return {
+      name:       item.name,
+      price:      item.price,
+      priceLabel: item.priceLabel,
+      date:       item.date  || '',
+      time:       item.time  || '',
+      group:      item.group || ''
+    };
+  });
+
+  try {
+    var res = await fetch('/.netlify/functions/create-checkout', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items:      items,
+        guestName:  guestName,
+        guestEmail: guestEmail,
+        successUrl: window.location.origin + '/?payment=success',
+        cancelUrl:  window.location.origin + '/?payment=cancelled'
+      })
+    });
+
+    var data = await res.json();
+
+    if (data.url) {
+      window.location.href = data.url;   // Redirect to Stripe Checkout
+    } else {
+      throw new Error(data.error || 'No URL returned');
+    }
+  } catch (err) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Pay via Card (Stripe)'; }
+    alert('Payment error: ' + err.message + '\nPlease try Wise or Revolut, or contact flavio@tupitour.com.');
+  }
 }
 
 function openWiseInfo() {
@@ -3321,7 +3362,7 @@ var TOUR_CAROUSELS = {
     </div>
     <div id="checkoutOptions" style="display:none;margin-top:0.75rem;display:none;flex-direction:column;gap:0.5rem;">
       <div style="font-size:0.72rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--light);margin-bottom:0.25rem;">Choose how to pay</div>
-      <button class="btn-checkout" onclick="checkout()">Pay via Stripe</button>
+      <button class="btn-checkout" onclick="checkout()">Pay via Card (Stripe)</button>
       <button class="btn-checkout" onclick="openWiseInfo()" style="background:#9FE870;color:#163300;">Pay via Wise</button>
       <div id="wiseInfo" style="display:none;margin-top:0.5rem;padding:0.85rem;background:var(--bg);border:1px solid var(--border);border-radius:2px;">
         <div style="font-size:0.72rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--light);margin-bottom:0.4rem;">Wise</div>
@@ -3338,7 +3379,7 @@ var TOUR_CAROUSELS = {
       </div>
       <button class="btn-checkout" style="background:var(--bg);color:var(--mid);border:1px solid var(--border);font-size:0.78rem;" onclick="closeCheckoutOptions()">&#8592; Back</button>
     </div>
-    <p class="cart-note">Confirmation within 24h &middot; Stripe &middot; Wise &middot; Revolut</p>
+    <p class="cart-note">Secure payment &middot; Card via Stripe &middot; Wise &middot; Revolut</p>
   </div>
 </div>
 
