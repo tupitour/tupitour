@@ -1957,7 +1957,7 @@ function openAmazonMenu() {
   document.getElementById('panelCat').textContent = 'Amazon Expedition - Motor Yacht Tucano';
   document.getElementById('panelTitle').textContent = 'Amazon Rainforest';
   var b = '';
-  b += makeCarousel('amazonC',['imgs/toucan-amazon-rainforest-brazil.jpg','imgs/amazon-river-rainforest-aerial-view-brazil.jpg','imgs/motor-yacht-tucano-sunset-amazon-river-brazil.jpg','imgs/motor-yacht-tucano-amazon-river-brazil.jpg','imgs/squirrel-monkey-amazon-rainforest-brazil.jpg','imgs/howler-monkey-amazon-rainforest-brazil.jpg','imgs/scarlet-macaw-pair-amazon-brazil.jpg','imgs/blue-yellow-macaw-amazon-brazil.jpg','imgs/victoria-regia-giant-water-lily-amazon-brazil.jpg','imgs/amazon-rainforest-canopy-vista-brazil.jpg'],['Toucan Amazon rainforest Brazil','Amazon river aerial view rainforest Brazil','Motor Yacht Tucano sunset Amazon river Brazil','Motor Yacht Tucano Amazon river expedition Brazil','Squirrel monkey Amazon rainforest Brazil','Howler monkey Amazon rainforest Brazil','Scarlet macaw pair Amazon Brazil','Blue and yellow macaw Amazon Brazil','Victoria regia giant water lily Amazon Brazil','Amazon rainforest canopy vista Brazil']);
+  b += makeCarousel('amazonC',['imgs/amazon-river-rainforest-aerial-view-brazil.jpg','imgs/motor-yacht-tucano-sunset-amazon-river-brazil.jpg','imgs/motor-yacht-tucano-amazon-river-brazil.jpg','imgs/squirrel-monkey-amazon-rainforest-brazil.jpg','imgs/howler-monkey-amazon-rainforest-brazil.jpg','imgs/scarlet-macaw-pair-amazon-brazil.jpg','imgs/blue-yellow-macaw-amazon-brazil.jpg','imgs/victoria-regia-giant-water-lily-amazon-brazil.jpg','imgs/amazon-rainforest-canopy-vista-brazil.jpg'],['Amazon river aerial view rainforest Brazil','Motor Yacht Tucano sunset Amazon river Brazil','Motor Yacht Tucano Amazon river expedition Brazil','Squirrel monkey Amazon rainforest Brazil','Howler monkey Amazon rainforest Brazil','Scarlet macaw pair Amazon Brazil','Blue and yellow macaw Amazon Brazil','Victoria regia giant water lily Amazon Brazil','Amazon rainforest canopy vista Brazil']);
   b += '<p class="panel-desc">Deep in the UNESCO Central Amazon Conservation Complex, the Motor Yacht Tucano takes small groups of up to 16 travelers farther into the wilderness than any other vessel. Expert naturalist guides, 4-5 daily excursions, electric launches, optional kayaks. Choose your expedition:</p>';
   b += '<div class="amazon-choice-grid">';
   b += '<div class="amazon-choice-card" onclick="openAmazonPanel(0)">';
@@ -1973,7 +1973,7 @@ function openAmazonMenu() {
   b += '</div>';
   b += '<div class="panel-highlight-box"><p>&#127757; <strong style="color:#7EC89A">UNESCO Central Amazon Conservation Complex</strong> &mdash; 6 million hectares. The only expedition vessel that goes this deep into the reserve.</p></div>';
   document.getElementById('panelBody').innerHTML = b;
-  document.getElementById('panelFooter').innerHTML = '<button class="btn-close-panel" onclick="closePanel()">Close</button><a class="btn-download-pdf" href="TupiTour_Amazon_Tucano_Guide.pdf" download>&#8595; Download Amazon brochure (PDF)</a>';
+  document.getElementById('panelFooter').innerHTML = '<button class="btn-contact-form" id="toggleFormBtn">Talk to us &mdash; plan your Amazon trip</button><button class="btn-close-panel" onclick="closePanel()">Close</button><a class="btn-download-pdf" href="TupiTour_Amazon_Tucano_Guide.pdf" download>&#8595; Download Amazon brochure (PDF)</a>'; var tb=document.getElementById('toggleFormBtn'); if(tb) tb.addEventListener('click', toggleContactForm);
   document.getElementById('tourPanel').classList.add('open');
   document.getElementById('overlay').classList.add('open');
 }
@@ -2059,6 +2059,9 @@ var TOUR_PHOTOS = {
   "Sunrise Tour": { srcs:["imgs/mirante-dona-marta-sunset-sugar-loaf-rio-de-janeiro.jpg","imgs/mirante-dona-marta-dawn-sugar-loaf-city-lights-rio.jpg","imgs/ipanema-beach-sunset-dois-irmaos-golden-hour-rio.jpg","imgs/botafogo-bay-sailboats-christ-redeemer-sunset-rio.jpg","imgs/corcovado-sunrise-sugar-loaf-botafogo-bay-orange-sky-rio.jpg"], alts:["Mirante Dona Marta sunset Sugar Loaf Rio de Janeiro","Mirante Dona Marta dawn Sugar Loaf city lights Rio","Ipanema beach sunset Dois Irmaos golden hour Rio","Botafogo Bay sailboats Christ Redeemer sunset Rio","Corcovado sunrise Sugar Loaf Botafogo Bay orange sky Rio"] },
   "Ilha Grande · Búzios · Paraty · Arraial": { srcs:["imgs/ilha-grande-speedboats-emerald-lagoon-atlantic-forest-brazil.jpg","imgs/ilha-grande-colorful-boat-crystal-water-mountains-brazil.jpg","imgs/angra-dos-reis-island-beach-atlantic-forest-brazil.jpg","imgs/angra-dos-reis-tropical-islands-aerial-turquoise-brazil.jpg","imgs/paraty-historic-cobblestone-street-colonial-houses-brazil.jpg","imgs/paraty-colonial-church-waterfront-boats-brazil.jpg","imgs/arraial-do-cabo-fishing-boats-crystal-water-beach-brazil.jpg","imgs/arraial-do-cabo-bay-boats-panoramic-hilltop-brazil.jpg"], alts:["Ilha Grande speedboats emerald lagoon Atlantic Forest Brazil","Ilha Grande colorful boat crystal water mountains Brazil","Angra dos Reis island beach Atlantic Forest Brazil","Angra dos Reis tropical islands aerial turquoise Brazil","Paraty historic cobblestone street colonial houses Brazil","Paraty colonial church waterfront boats Brazil","Arraial do Cabo fishing boats crystal water beach Brazil","Arraial do Cabo bay boats panoramic hilltop Brazil"] },
   "Coast to Coast": { srcs:["imgs/grumari-beach-aerial-view-rio-de-janeiro.jpg","imgs/prainha-beach-turquoise-water-rio-de-janeiro.jpg","imgs/barra-da-tijuca-beach-pedra-gavea-rio-de-janeiro.jpg","imgs/barra-da-tijuca-beach-shoreline-rio-de-janeiro.jpg","imgs/reserva-beach-aerial-view-barra-da-tijuca-rio.jpg","imgs/ipanema-beach-panoramic-view-arpoador-rio.jpg","imgs/flamengo-beach-aerial-sugar-loaf-rio-de-janeiro.jpg"], alts:["Grumari beach aerial view Rio de Janeiro","Prainha beach turquoise water Rio de Janeiro","Barra da Tijuca beach Pedra da Gavea Rio de Janeiro","Barra da Tijuca beach shoreline Rio de Janeiro","Reserva beach aerial view Barra da Tijuca Rio","Ipanema beach panoramic view Arpoador Rio de Janeiro","Flamengo beach aerial Sugar Loaf Rio de Janeiro"] },
+  "Match Day Experience": { srcs:["imgs/maracana-stadium-night-flamengo-match-rio.jpg","imgs/flamengo-fans-maracana-full-stadium-rio.jpg","imgs/flamengo-fans-flags-smoke-maracana-rio-de-janeiro.jpg","imgs/maracana-fluminense-fans-flag-rio-de-janeiro.jpg","imgs/fluminense-fans-mosaic-smoke-maracana-rio.jpg","imgs/botafogo-fans-mosaic-nilton-santos-stadium-rio.jpg","imgs/botafogo-fans-classic-mosaic-engenhao-rio.jpg","imgs/sao-januario-stadium-vasco-fans-fireworks-rio.jpg"], alts:["Maracanã stadium night Flamengo match Rio de Janeiro","Flamengo fans Maracanã full stadium Rio de Janeiro","Flamengo fans flags smoke Maracanã Rio de Janeiro","Maracanã Fluminense fans flag Rio de Janeiro","Fluminense fans mosaic smoke Maracanã Rio","Botafogo fans mosaic Nilton Santos stadium Rio","Botafogo fans classic mosaic Engenhão Rio","São Januário stadium Vasco fans fireworks Rio"] },
+  "Petrópolis": { srcs:["imgs/imperial-museum-petropolis-facade-rio-de-janeiro.jpg","imgs/imperial-museum-petropolis-night-lights-brazil.jpg","imgs/imperial-museum-petropolis-red-facade-brazil.jpg","imgs/crystal-palace-petropolis-rio-de-janeiro-state.jpg","imgs/petropolis-cathedral-sao-pedro-alcantara-brazil.jpg","imgs/petropolis-cathedral-tower-view-rio-de-janeiro-state.jpg","imgs/petropolis-canal-cathedral-view-rio-de-janeiro-state.jpg","imgs/petropolis-historic-palace-yellow-rio-de-janeiro.jpg","imgs/quitandinha-palace-hotel-petropolis-brazil.jpg"], alts:["Imperial Museum Petrópolis facade Rio de Janeiro","Imperial Museum Petrópolis night lights Brazil","Imperial Museum Petrópolis red facade Brazil","Crystal Palace Petrópolis Rio de Janeiro state","Petrópolis Cathedral São Pedro de Alcântara Brazil","Petrópolis cathedral tower view Rio de Janeiro state","Petrópolis canal cathedral view Rio de Janeiro state","Petrópolis historic yellow palace Rio de Janeiro","Quitandinha Palace Hotel Petrópolis Brazil"] },
+  "Private Transfer": { srcs:["imgs/christ-redeemer-close-up-rio-de-janeiro.jpg","imgs/botafogo-bay-sunset-christ-redeemer-silhouette.jpg","imgs/christ-redeemer-aerial-view-rio-de-janeiro.jpg","imgs/copacabana-boardwalk-aerial-mosaic-rio.jpg","imgs/sugar-loaf-mountain-sunrise-fog-rio-de-janeiro.jpg","imgs/theatro-municipal-aerial-view-rio-de-janeiro.jpg","imgs/real-gabinete-portugues-leitura-interior-rio.jpg"], alts:["Christ the Redeemer close up blue sky Rio de Janeiro","Botafogo Bay sunset Christ the Redeemer silhouette Rio de Janeiro","Christ the Redeemer aerial view Corcovado Rio de Janeiro","Copacabana boardwalk mosaic aerial view Rio de Janeiro","Sugar Loaf mountain sunrise fog Rio de Janeiro","Theatro Municipal aerial view Rio de Janeiro","Real Gabinete Portugues de Leitura interior Rio de Janeiro"] },
 };
 
 function openPanel(name) {
@@ -2109,9 +2112,14 @@ function openPanel(name) {
   if (t.type === 'cart') {
     footerHtml += '<div class="panel-price-display">From <strong>' + t.priceLabel + '</strong></div>';
     footerHtml += '<button class="btn-add-cart" id="addCartBtn">Select date & book</button>';
-    
     footerHtml += '<button class="btn-contact-form" id="toggleFormBtn">Talk to us</button>';
     footerHtml += '<button class="btn-close-panel" onclick="closePanel()">Close</button>';
+    footerHtml += '<div class="panel-contact-form" id="panelForm">';
+    footerHtml += '<div class="panel-field"><label>Your name</label><input type="text" id="formName" placeholder="Jane Smith"></div>';
+    footerHtml += '<div class="panel-field"><label>Email</label><input type="email" id="formEmail" placeholder="jane@email.com"></div>';
+    footerHtml += '<div class="panel-field"><label>Message</label><textarea id="formMsg" placeholder="Dates, group size, any questions..."></textarea></div>';
+    footerHtml += '<button class="btn-send-inquiry" id="sendInqBtn">Send request</button>';
+    footerHtml += '</div>';
   } else {
     footerHtml += '<button class="btn-contact-form" id="toggleFormBtn">Talk to us</button>';
     footerHtml += '<button class="btn-close-panel" onclick="closePanel()">Close</button>';
@@ -2142,7 +2150,12 @@ function openPanel(name) {
 
 function toggleContactForm() {
   var form = document.getElementById('panelForm');
-  if (form) form.classList.toggle('visible');
+  if (form) {
+    form.classList.toggle('visible');
+  } else {
+    // Tour com calendário - abre modal com WhatsApp + formulário
+    openGetInTouch();
+  }
 }
 
 function sendInquiry(tourName) {
@@ -2492,7 +2505,7 @@ var MULTI_DAY_TOURS = {
   'City Tour Rio — 5 days': 5
 };
 
-var timeSlots = ['6:00 AM','7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM'];
+var timeSlots = ['6:00 AM','7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM'];
 var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 // Hamburger menu
@@ -2935,7 +2948,7 @@ function handleSubmit(e) {
 function openLencoisMenu() {
   document.getElementById('panelCat').textContent = 'Exclusive riverside eco-resort — Barreirinhas, Maranhão';
   document.getElementById('panelTitle').textContent = 'Lençóis Maranhenses';
-  var b = makeCarousel('lencoisC',['imgs/lencois-maranhenses-aerial-dunes-lagoons-brazil.jpg','imgs/lencois-maranhenses-dunes-lagoons-vegetation-brazil.jpg','imgs/lencois-maranhenses-white-dunes-turquoise-lagoons-storm-brazil.jpg','imgs/lencois-maranhenses-aerial-turquoise-lagoons-white-dunes-brazil.jpg'],['Lencois Maranhenses white sand dunes and turquoise lagoons Brazil','Lencois Maranhenses dunes lagoons vegetation Maranhao Brazil','Lencois Maranhenses white dunes turquoise lagoons storm sky Brazil','Lencois Maranhenses aerial turquoise lagoons white dunes Brazil']);
+  var b = makeCarousel('lencoisC',['imgs/lencois-maranhenses-aerial-dunes-lagoons-brazil.jpg','imgs/lencois-maranhenses-white-dunes-turquoise-lagoons-storm-brazil.jpg'],['Lencois Maranhenses white sand dunes and turquoise lagoons Brazil','Lencois Maranhenses white dunes turquoise lagoons storm sky Brazil']);
   b += '<p class="panel-desc">White sand dunes stretching to the horizon, turquoise lagoons forming between them after the rains — and an exclusive eco-resort as your base. The only resort on the banks of the Rio Preguiças, set on 200,000 m² of preserved tropical gardens just 2km from Barreirinhas. Legendary sand-bottom pool, spa, kayak on the river, and all excursions arranged by Tupi Tour. A world that exists nowhere else on Earth.</p>';
   b += '<div style="background:#0B2217;border-left:3px solid #D4A843;padding:0.8rem 1rem;margin-bottom:1.25rem;border-radius:0 2px 2px 0"><p style="font-size:0.8rem;line-height:1.7;color:rgba(255,255,255,0.8);margin:0">&#9992; <strong style="color:#D4A843">Getting there</strong> &mdash; Fly into <strong style="color:#fff">São Luís (SLZ)</strong>. Tupi Tour arranges your private transfer from the airport or your São Luís hotel to the resort in Barreirinhas (~4 hours). We handle all logistics.</p></div>';
   b += '<div class="panel-section-title">Choose your chalet</div>';
@@ -2986,8 +2999,8 @@ function openLencoisChalet(idx) {
   document.getElementById('panelCat').textContent = c.size+' — Exclusive Eco-Resort, Barreirinhas';
   document.getElementById('panelTitle').textContent = c.name;
   var b=makeCarousel('lencoisCC',
-  ['imgs/lencois-maranhenses-dunes-lagoons-vegetation-brazil.jpg','imgs/lencois-maranhenses-aerial-dunes-lagoons-brazil.jpg','imgs/lencois-maranhenses-white-dunes-turquoise-lagoons-storm-brazil.jpg','imgs/lencois-maranhenses-aerial-turquoise-lagoons-white-dunes-brazil.jpg'],
-  ['Lencois Maranhenses dunes lagoons vegetation Maranhao Brazil','Lencois Maranhenses aerial dunes lagoons Brazil','Lencois Maranhenses white dunes turquoise lagoons storm sky Brazil','Lencois Maranhenses aerial turquoise lagoons white dunes Brazil']);
+  ['imgs/lencois-maranhenses-aerial-dunes-lagoons-brazil.jpg','imgs/lencois-maranhenses-white-dunes-turquoise-lagoons-storm-brazil.jpg'],
+  ['Lencois Maranhenses white sand dunes and turquoise lagoons Brazil','Lencois Maranhenses white dunes turquoise lagoons storm sky Brazil']);
   b+='<p class="panel-desc">'+c.desc+'</p>';
   b+='<div style="background:#0B2217;border-left:3px solid #D4A843;padding:0.8rem 1rem;margin-bottom:1.25rem;border-radius:0 2px 2px 0"><p style="font-size:0.8rem;line-height:1.7;color:rgba(255,255,255,0.8);margin:0"><strong style="color:#D4A843">'+c.price+' / night</strong><br>Includes Tupi Tour service fee. Jun 1–Sep 15, 2026. Holiday rates on request.</p></div>';
   b+='<div class="panel-section-title">Included in your stay</div><ul class="panel-list">';
