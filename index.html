@@ -631,6 +631,35 @@ h1 em { font-style: italic; color: var(--green); }
 
   /* WhatsApp float — move up on mobile */
   .wa-float { bottom: 4.5rem; right: 1.25rem; width: 46px; height: 46px; font-size: 1.3rem; }
+
+  /* Carousel mobile — aparece abaixo dos stats */
+  .hero-carousel-mobile {
+    display: block;
+    width: 100%;
+    height: 56vw;
+    max-height: 320px;
+    overflow: hidden;
+    background: var(--dark);
+  }
+  .hero-carousel-mobile .carousel-track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
+  }
+  .hero-carousel-mobile .carousel-slide {
+    min-width: 100%; height: 100%;
+    position: relative; overflow: hidden;
+    display: flex; align-items: flex-end;
+  }
+  .hero-carousel-mobile .carousel-bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    transition: transform 8s ease;
+  }
+  .hero-carousel-mobile .carousel-slide.active .carousel-bg { transform: scale(1.06); }
+
+  /* Formulário de contato — coluna única no mobile */
+  .contact-form .form-row { grid-template-columns: 1fr; }
 }
 
 /* CONTACT */
@@ -768,6 +797,9 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
 
 /* Hero sobre o carousel */
 .hero-over-carousel { display: none; }
+
+/* Carousel mobile — escondido por padrão, aparece só em mobile */
+.hero-carousel-mobile { display: none; }
 
 
 /* TOUR PANEL */
@@ -1419,6 +1451,48 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
     </div>
   </div>
 
+  <!-- CAROUSEL MOBILE — aparece abaixo dos stats apenas em mobile -->
+  <div class="hero-carousel-mobile" id="heroCarouselMobile">
+    <div class="carousel-track" id="carouselTrackMobile">
+      <div class="carousel-slide active slide-rio">
+        <div class="carousel-bg" style="background-image:url('imgs/christ-redeemer-face-close-up-rio-de-janeiro.jpg')"></div>
+        <div class="carousel-overlay"></div>
+        <div class="carousel-caption"><div class="carousel-caption-tag">Rio de Janeiro</div><div class="carousel-caption-title">The Marvelous City</div></div>
+      </div>
+      <div class="carousel-slide slide-amazon">
+        <div class="carousel-bg" style="background-image:url('imgs/amazon-river-rainforest-aerial-view-brazil.jpg')"></div>
+        <div class="carousel-overlay"></div>
+        <div class="carousel-caption"><div class="carousel-caption-tag">Amazon Rainforest</div><div class="carousel-caption-title">The world's greatest jungle</div></div>
+      </div>
+      <div class="carousel-slide slide-jaguar">
+        <div class="carousel-bg" style="background-image:url('imgs/jaguar-hunting-riverbank-sand-pantanal-brazil.jpg')"></div>
+        <div class="carousel-overlay"></div>
+        <div class="carousel-caption"><div class="carousel-caption-tag">Pantanal</div><div class="carousel-caption-title">Jaguar country</div></div>
+      </div>
+      <div class="carousel-slide slide-arara">
+        <div class="carousel-bg" style="background-image:url('imgs/hyacinth-macaw-close-up-pantanal-brazil.jpg')"></div>
+        <div class="carousel-overlay"></div>
+        <div class="carousel-caption"><div class="carousel-caption-tag">Brazilian wildlife</div><div class="carousel-caption-title">Colors of Brazil</div></div>
+      </div>
+      <div class="carousel-slide slide-lencois">
+        <div class="carousel-bg" style="background-image:url('imgs/lencois-maranhenses-aerial-dunes-lagoons-brazil.jpg')"></div>
+        <div class="carousel-overlay"></div>
+        <div class="carousel-caption"><div class="carousel-caption-tag">Lençóis Maranhenses</div><div class="carousel-caption-title">Dunes and crystal lagoons</div></div>
+      </div>
+    </div>
+    <div class="carousel-arrows">
+      <button class="carousel-arrow" onclick="moveMobileCarousel(-1)">←</button>
+      <button class="carousel-arrow" onclick="moveMobileCarousel(1)">→</button>
+    </div>
+    <div class="carousel-controls" id="carouselDotsMobile">
+      <button class="carousel-dot active" onclick="goToSlideMobile(0)"></button>
+      <button class="carousel-dot" onclick="goToSlideMobile(1)"></button>
+      <button class="carousel-dot" onclick="goToSlideMobile(2)"></button>
+      <button class="carousel-dot" onclick="goToSlideMobile(3)"></button>
+      <button class="carousel-dot" onclick="goToSlideMobile(4)"></button>
+    </div>
+  </div>
+
   <div class="hero-right-col">
     <div class="carousel" id="mainCarousel" style="height:100%;min-height:calc(100vh - 68px);">
       <div class="carousel-track" id="carouselTrack">
@@ -1874,7 +1948,7 @@ const tours = {
     excludes:["Food and drinks (paid directly at each stop — all accept credit cards)","Souvenirs"]
   },
   "Pantanal Carioca": {
-    type:"cart", price:1, priceLabel:"USD 1 (TEST)", duration:"3 hours", group:"1 to 4 people",
+    type:"cart", price:150, priceLabel:"USD 150-200 per group", duration:"3 hours", group:"1 to 4 people",
     desc:"Most people don't know that Rio has its own wildlife sanctuary — right inside the city. We hop on a boat and navigate through mangroves and calm waters where capybaras, alligators, herons, and dozens of bird species live freely in an urban ecosystem unlike anything else in the world. We also pass by inhabited islands where communities have lived surrounded by water for generations — a Rio that tourists almost never see. Animal sightings are always possible but never guaranteed — nature writes its own script. Weather conditions may affect the route, but the experience is always worth it.",
     includes:["Certified local guide","Boat rental","Pick-up & drop-off anywhere in Rio"],
     excludes:["Food, drinks and souvenirs"],
@@ -2460,6 +2534,40 @@ function resetTimer() {
 }
 
 autoTimer = setInterval(function() { moveCarousel(1); }, 5000);
+
+// ── CAROUSEL MOBILE ──
+var mCurrent = 0;
+var mTotal = 5;
+var mAutoTimer;
+
+function updateMobileCarousel() {
+  var track = document.getElementById('carouselTrackMobile');
+  if (!track) return;
+  var slides = track.querySelectorAll('.carousel-slide');
+  var dots = document.querySelectorAll('#carouselDotsMobile .carousel-dot');
+  track.style.transform = 'translateX(-' + (mCurrent * 100) + '%)';
+  slides.forEach(function(s, i) { s.classList.toggle('active', i === mCurrent); });
+  dots.forEach(function(d, i) { d.classList.toggle('active', i === mCurrent); });
+}
+
+function moveMobileCarousel(dir) {
+  mCurrent = (mCurrent + dir + mTotal) % mTotal;
+  updateMobileCarousel();
+  resetMobileTimer();
+}
+
+function goToSlideMobile(n) {
+  mCurrent = n;
+  updateMobileCarousel();
+  resetMobileTimer();
+}
+
+function resetMobileTimer() {
+  clearInterval(mAutoTimer);
+  mAutoTimer = setInterval(function() { moveMobileCarousel(1); }, 5000);
+}
+
+mAutoTimer = setInterval(function() { moveMobileCarousel(1); }, 5000);
 
 // Tour card colors
 var tones = ['#F9F8F6', '#F5F3EF', '#F0EEE9'];
@@ -3413,7 +3521,7 @@ var TOUR_CAROUSELS = {
     </div>
     <div id="checkoutOptions" style="display:none;margin-top:0.75rem;display:none;flex-direction:column;gap:0.5rem;">
       <div style="font-size:0.72rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--light);margin-bottom:0.25rem;">Choose how to pay</div>
-      <button class="btn-checkout" onclick="checkout()">Pay via Stripe</button>
+      <button class="btn-checkout" onclick="checkout()">Pay via Card</button>
       <button class="btn-checkout" onclick="openWiseInfo()" style="background:#9FE870;color:#163300;">Pay via Wise</button>
       <div id="wiseInfo" style="display:none;margin-top:0.5rem;padding:0.85rem;background:var(--bg);border:1px solid var(--border);border-radius:2px;">
         <div style="font-size:0.72rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--light);margin-bottom:0.4rem;">Wise</div>
@@ -3430,7 +3538,7 @@ var TOUR_CAROUSELS = {
       </div>
       <button class="btn-checkout" style="background:var(--bg);color:var(--mid);border:1px solid var(--border);font-size:0.78rem;" onclick="closeCheckoutOptions()">&#8592; Back</button>
     </div>
-    <p class="cart-note">Confirmation within 24h &middot; Stripe &middot; Wise &middot; Revolut</p>
+    <p class="cart-note">Confirmation within 24h &middot; Card &middot; Wise &middot; Revolut</p>
   </div>
 </div>
 
