@@ -2473,7 +2473,45 @@ function sendConfirmationEmail(method) {
 
 function checkout() {
   if (!cart.length) return;
-  alert('Stripe payment link coming soon. Please use Wise or Revolut, or contact us at flavio@tupitour.com.');
+
+  var btn = document.querySelector('.btn-checkout');
+  if (btn) { btn.disabled = true; btn.textContent = 'Processing…'; }
+
+  var items = cart.map(function(item) {
+    return {
+      name: item.name,
+      price: item.price,
+      priceLabel: item.priceLabel || '',
+      date: item.date || '',
+      time: item.time || '',
+      group: item.group || ''
+    };
+  });
+
+  fetch('/.netlify/functions/create-checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      items: items,
+      guestName: '',
+      guestEmail: '',
+      successUrl: window.location.origin + '/?payment=success',
+      cancelUrl: window.location.origin + '/?payment=cancelled'
+    })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert('Payment error: ' + (data.error || 'Unknown error. Please try Wise or Revolut.'));
+      if (btn) { btn.disabled = false; btn.textContent = 'Pay via Card'; }
+    }
+  })
+  .catch(function(err) {
+    alert('Connection error. Please try Wise or Revolut or contact us at flavio@tupitour.com.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Pay via Card'; }
+  });
 }
 
 function openWiseInfo() {
