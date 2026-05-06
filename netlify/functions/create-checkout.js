@@ -1,5 +1,4 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
@@ -42,26 +41,35 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
-  const { items, guestName, guestEmail, successUrl, cancelUrl } = body;
+  const { items, guestName, guestEmail, successUrl, cancelUrl, brlRate } = body;
 
   if (!items || !Array.isArray(items) || items.length === 0) {
     return { statusCode: 400, body: JSON.stringify({ error: 'No items in cart' }) };
   }
 
+  // brlRate is sent from the frontend (USD→BRL rate fetched at checkout time).
+  // Fallback to a conservative rate if not provided — this should not happen in practice.
+  const rate = (typeof brlRate === 'number' && brlRate > 1) ? brlRate : 6.0;
+
   const lineItems = items.map(function(item) {
+    // item.price is always in USD (as stored in the cart).
+    // Convert to BRL, round to 2 decimal places, then to centavos (integer).
+    const brlAmount = Math.round(item.price * rate * 100); // centavos
+
     return {
       price_data: {
-        currency: 'usd',
+        currency: 'brl',
         product_data: {
           name: item.name,
           description: [
             item.date ? '📅 ' + item.date : null,
             item.time ? '🕐 ' + item.time : null,
             item.group ? '👥 ' + item.group + ' people' : null,
-            item.priceLabel || null
+            item.priceLabel || null,
+            'USD ' + item.price + ' · Rate: 1 USD = R$ ' + rate.toFixed(2)
           ].filter(Boolean).join('  ·  ')
         },
-        unit_amount: Math.round(item.price * 100)
+        unit_amount: brlAmount
       },
       quantity: 1
     };
@@ -77,7 +85,8 @@ exports.handler = async function(event) {
         guest_name: guestName || '',
         guest_email: guestEmail || '',
         tours: items.map(function(i) { return i.name; }).join(', '),
-        dates: items.map(function(i) { return i.date || ''; }).join(' | ')
+        dates: items.map(function(i) { return i.date || ''; }).join(' | '),
+        usd_rate: String(rate)
       },
       success_url: successUrl || 'https://www.tupitour.com/?payment=success',
       cancel_url: cancelUrl || 'https://www.tupitour.com/?payment=cancelled',

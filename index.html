@@ -2307,6 +2307,25 @@ function closeAll() {
 // Cart
 var cart = [];
 
+// ── FX RATE (USD → BRL) ──
+var _fxRate = null;
+
+async function fetchFxRate() {
+  if (_fxRate) return _fxRate;
+  try {
+    var res = await fetch('https://open.er-api.com/v6/latest/USD');
+    var data = await res.json();
+    if (data && data.rates && data.rates.BRL) {
+      _fxRate = data.rates.BRL;
+      return _fxRate;
+    }
+  } catch(e) {
+    console.warn('FX fetch failed, using fallback rate', e);
+  }
+  _fxRate = 6.0;
+  return _fxRate;
+}
+
 function addToCart(name) {
   var t = tours[name];
   if (!t) return;
@@ -2375,6 +2394,10 @@ function updateCart() {
 
   items.innerHTML = html;
   total.textContent = 'USD ' + sum.toLocaleString();
+  if (_fxRate) {
+    var brlEquiv = (sum * _fxRate).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    total.textContent = 'USD ' + sum.toLocaleString() + '  ≈ ' + brlEquiv;
+  }
 
   if (note) {
     if (hasDeposit && hasFull) {
@@ -2388,6 +2411,16 @@ function updateCart() {
 }
 
 function openCart() {
+  fetchFxRate().then(function(rate) {
+    var sum = cart.reduce(function(s, i) { return s + i.price; }, 0);
+    if (sum > 0 && rate) {
+      var totalEl = document.getElementById('cartTotal');
+      if (totalEl) {
+        var brlEquiv = (sum * rate).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        totalEl.textContent = 'USD ' + sum.toLocaleString() + '  ≈ ' + brlEquiv;
+      }
+    }
+  });
   document.getElementById('cartPanel').classList.add('open');
   document.getElementById('overlay').classList.add('open');
 }
@@ -2471,11 +2504,20 @@ function sendConfirmationEmail(method) {
   }, 800);
 }
 
-function checkout() {
+async function checkout() {
   if (!cart.length) return;
 
-  var btn = document.querySelector('.btn-checkout');
+  var btn = document.querySelector('#checkoutOptions .btn-checkout');
   if (btn) { btn.disabled = true; btn.textContent = 'Processing…'; }
+
+  var rate = await fetchFxRate();
+
+  var sum = cart.reduce(function(s, i) { return s + i.price; }, 0);
+  var totalEl = document.getElementById('cartTotal');
+  if (totalEl && rate) {
+    var brlEquiv = (sum * rate).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    totalEl.textContent = 'USD ' + sum.toLocaleString() + '  ≈ ' + brlEquiv;
+  }
 
   var items = cart.map(function(item) {
     return {
@@ -2488,13 +2530,17 @@ function checkout() {
     };
   });
 
+  var guestName = cart[0] ? (cart[0].guestName || '') : '';
+  var guestEmail = cart[0] ? (cart[0].guestEmail || '') : '';
+
   fetch('/.netlify/functions/create-checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       items: items,
-      guestName: '',
-      guestEmail: '',
+      guestName: guestName,
+      guestEmail: guestEmail,
+      brlRate: rate,
       successUrl: window.location.origin + '/?payment=success',
       cancelUrl: window.location.origin + '/?payment=cancelled'
     })
@@ -3558,6 +3604,7 @@ var TOUR_CAROUSELS = {
       <button class="btn-checkout" style="background:var(--bg);color:var(--mid);border:1px solid var(--border);font-size:0.78rem;" onclick="closeCheckoutOptions()">&#8592; Back</button>
     </div>
     <p class="cart-note">Confirmation within 24h &middot; Card &middot; Wise &middot; Revolut</p>
+    <p class="cart-note" style="margin-top:0.35rem;font-size:0.68rem;color:var(--light);">Card payments charged in BRL at the rate shown. USD amount for reference.</p>
   </div>
 </div>
 
