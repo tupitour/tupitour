@@ -567,7 +567,9 @@ h1 em { font-style: italic; color: var(--green); }
   .dest-grid { grid-template-columns: repeat(2, 1fr); }
   .about { grid-template-columns: 1fr; gap: 3rem; }
   .contact { grid-template-columns: 1fr; gap: 3rem; }
+  .form-row { grid-template-columns: 1fr; }
   footer { flex-direction: column; gap: 1.5rem; text-align: center; }
+  .hero-carousel-mobile { display: block; }
   .footer-links { flex-wrap: wrap; justify-content: center; }
 }
 
@@ -631,35 +633,6 @@ h1 em { font-style: italic; color: var(--green); }
 
   /* WhatsApp float — move up on mobile */
   .wa-float { bottom: 4.5rem; right: 1.25rem; width: 46px; height: 46px; font-size: 1.3rem; }
-
-  /* Carousel mobile — aparece abaixo dos stats */
-  .hero-carousel-mobile {
-    display: block;
-    width: 100%;
-    height: 56vw;
-    max-height: 320px;
-    overflow: hidden;
-    background: var(--dark);
-  }
-  .hero-carousel-mobile .carousel-track {
-    display: flex;
-    height: 100%;
-    transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
-  }
-  .hero-carousel-mobile .carousel-slide {
-    min-width: 100%; height: 100%;
-    position: relative; overflow: hidden;
-    display: flex; align-items: flex-end;
-  }
-  .hero-carousel-mobile .carousel-bg {
-    position: absolute; inset: 0;
-    background-size: cover; background-position: center;
-    transition: transform 8s ease;
-  }
-  .hero-carousel-mobile .carousel-slide.active .carousel-bg { transform: scale(1.06); }
-
-  /* Formulário de contato — coluna única no mobile */
-  .contact-form .form-row { grid-template-columns: 1fr; }
 }
 
 /* CONTACT */
@@ -798,8 +771,36 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
 /* Hero sobre o carousel */
 .hero-over-carousel { display: none; }
 
-/* Carousel mobile — escondido por padrão, aparece só em mobile */
-.hero-carousel-mobile { display: none; }
+/* ── CAROUSEL MOBILE ── escondido no desktop, visível em mobile */
+.hero-carousel-mobile {
+  display: none;
+  position: relative;
+  width: 100%;
+  height: 60vw;
+  max-height: 340px;
+  overflow: hidden;
+  background: var(--dark);
+  border-top: 1px solid var(--border);
+}
+.hcm-track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.8s cubic-bezier(0.77,0,0.175,1);
+}
+.hcm-slide {
+  min-width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+.hcm-slide .carousel-bg {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  transition: transform 8s ease;
+}
+.hcm-slide.active .carousel-bg { transform: scale(1.06); }
 
 
 /* TOUR PANEL */
@@ -1451,48 +1452,6 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
     </div>
   </div>
 
-  <!-- CAROUSEL MOBILE — aparece abaixo dos stats apenas em mobile -->
-  <div class="hero-carousel-mobile" id="heroCarouselMobile">
-    <div class="carousel-track" id="carouselTrackMobile">
-      <div class="carousel-slide active slide-rio">
-        <div class="carousel-bg" style="background-image:url('imgs/christ-redeemer-face-close-up-rio-de-janeiro.jpg')"></div>
-        <div class="carousel-overlay"></div>
-        <div class="carousel-caption"><div class="carousel-caption-tag">Rio de Janeiro</div><div class="carousel-caption-title">The Marvelous City</div></div>
-      </div>
-      <div class="carousel-slide slide-amazon">
-        <div class="carousel-bg" style="background-image:url('imgs/amazon-river-rainforest-aerial-view-brazil.jpg')"></div>
-        <div class="carousel-overlay"></div>
-        <div class="carousel-caption"><div class="carousel-caption-tag">Amazon Rainforest</div><div class="carousel-caption-title">The world's greatest jungle</div></div>
-      </div>
-      <div class="carousel-slide slide-jaguar">
-        <div class="carousel-bg" style="background-image:url('imgs/jaguar-hunting-riverbank-sand-pantanal-brazil.jpg')"></div>
-        <div class="carousel-overlay"></div>
-        <div class="carousel-caption"><div class="carousel-caption-tag">Pantanal</div><div class="carousel-caption-title">Jaguar country</div></div>
-      </div>
-      <div class="carousel-slide slide-arara">
-        <div class="carousel-bg" style="background-image:url('imgs/hyacinth-macaw-close-up-pantanal-brazil.jpg')"></div>
-        <div class="carousel-overlay"></div>
-        <div class="carousel-caption"><div class="carousel-caption-tag">Brazilian wildlife</div><div class="carousel-caption-title">Colors of Brazil</div></div>
-      </div>
-      <div class="carousel-slide slide-lencois">
-        <div class="carousel-bg" style="background-image:url('imgs/lencois-maranhenses-aerial-dunes-lagoons-brazil.jpg')"></div>
-        <div class="carousel-overlay"></div>
-        <div class="carousel-caption"><div class="carousel-caption-tag">Lençóis Maranhenses</div><div class="carousel-caption-title">Dunes and crystal lagoons</div></div>
-      </div>
-    </div>
-    <div class="carousel-arrows">
-      <button class="carousel-arrow" onclick="moveMobileCarousel(-1)">←</button>
-      <button class="carousel-arrow" onclick="moveMobileCarousel(1)">→</button>
-    </div>
-    <div class="carousel-controls" id="carouselDotsMobile">
-      <button class="carousel-dot active" onclick="goToSlideMobile(0)"></button>
-      <button class="carousel-dot" onclick="goToSlideMobile(1)"></button>
-      <button class="carousel-dot" onclick="goToSlideMobile(2)"></button>
-      <button class="carousel-dot" onclick="goToSlideMobile(3)"></button>
-      <button class="carousel-dot" onclick="goToSlideMobile(4)"></button>
-    </div>
-  </div>
-
   <div class="hero-right-col">
     <div class="carousel" id="mainCarousel" style="height:100%;min-height:calc(100vh - 68px);">
       <div class="carousel-track" id="carouselTrack">
@@ -1542,6 +1501,48 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
   </div>
 
 </section>
+
+<!-- CAROUSEL MOBILE — fora do grid do hero, aparece só em mobile -->
+<div class="hero-carousel-mobile" id="heroCarouselMobile">
+  <div class="hcm-track" id="hcmTrack">
+    <div class="hcm-slide active slide-rio">
+      <div class="carousel-bg" style="background-image:url('imgs/christ-redeemer-face-close-up-rio-de-janeiro.jpg')"></div>
+      <div class="carousel-overlay"></div>
+      <div class="carousel-caption"><div class="carousel-caption-tag">Rio de Janeiro</div><div class="carousel-caption-title">The Marvelous City</div></div>
+    </div>
+    <div class="hcm-slide slide-amazon">
+      <div class="carousel-bg" style="background-image:url('imgs/amazon-river-rainforest-aerial-view-brazil.jpg')"></div>
+      <div class="carousel-overlay"></div>
+      <div class="carousel-caption"><div class="carousel-caption-tag">Amazon Rainforest</div><div class="carousel-caption-title">The world's greatest jungle</div></div>
+    </div>
+    <div class="hcm-slide slide-jaguar">
+      <div class="carousel-bg" style="background-image:url('imgs/jaguar-hunting-riverbank-sand-pantanal-brazil.jpg')"></div>
+      <div class="carousel-overlay"></div>
+      <div class="carousel-caption"><div class="carousel-caption-tag">Pantanal</div><div class="carousel-caption-title">Jaguar country</div></div>
+    </div>
+    <div class="hcm-slide slide-arara">
+      <div class="carousel-bg" style="background-image:url('imgs/hyacinth-macaw-close-up-pantanal-brazil.jpg')"></div>
+      <div class="carousel-overlay"></div>
+      <div class="carousel-caption"><div class="carousel-caption-tag">Brazilian wildlife</div><div class="carousel-caption-title">Colors of Brazil</div></div>
+    </div>
+    <div class="hcm-slide slide-lencois">
+      <div class="carousel-bg" style="background-image:url('imgs/lencois-maranhenses-aerial-dunes-lagoons-brazil.jpg')"></div>
+      <div class="carousel-overlay"></div>
+      <div class="carousel-caption"><div class="carousel-caption-tag">Lençóis Maranhenses</div><div class="carousel-caption-title">Dunes and crystal lagoons</div></div>
+    </div>
+  </div>
+  <div class="carousel-arrows">
+    <button class="carousel-arrow" onclick="hcmMove(-1)">←</button>
+    <button class="carousel-arrow" onclick="hcmMove(1)">→</button>
+  </div>
+  <div class="carousel-controls" id="hcmDots">
+    <button class="carousel-dot active" onclick="hcmGo(0)"></button>
+    <button class="carousel-dot" onclick="hcmGo(1)"></button>
+    <button class="carousel-dot" onclick="hcmGo(2)"></button>
+    <button class="carousel-dot" onclick="hcmGo(3)"></button>
+    <button class="carousel-dot" onclick="hcmGo(4)"></button>
+  </div>
+</div>
 
 
 
@@ -2535,39 +2536,21 @@ function resetTimer() {
 
 autoTimer = setInterval(function() { moveCarousel(1); }, 5000);
 
-// ── CAROUSEL MOBILE ──
-var mCurrent = 0;
-var mTotal = 5;
-var mAutoTimer;
-
-function updateMobileCarousel() {
-  var track = document.getElementById('carouselTrackMobile');
+// ── CAROUSEL MOBILE (hcm) ──
+var hcmCurrent = 0;
+var hcmTotal = 5;
+var hcmTimer;
+function hcmUpdate() {
+  var track = document.getElementById('hcmTrack');
   if (!track) return;
-  var slides = track.querySelectorAll('.carousel-slide');
-  var dots = document.querySelectorAll('#carouselDotsMobile .carousel-dot');
-  track.style.transform = 'translateX(-' + (mCurrent * 100) + '%)';
-  slides.forEach(function(s, i) { s.classList.toggle('active', i === mCurrent); });
-  dots.forEach(function(d, i) { d.classList.toggle('active', i === mCurrent); });
+  track.style.transform = 'translateX(-' + (hcmCurrent * 100) + '%)';
+  track.querySelectorAll('.hcm-slide').forEach(function(s,i){ s.classList.toggle('active', i===hcmCurrent); });
+  document.querySelectorAll('#hcmDots .carousel-dot').forEach(function(d,i){ d.classList.toggle('active', i===hcmCurrent); });
 }
-
-function moveMobileCarousel(dir) {
-  mCurrent = (mCurrent + dir + mTotal) % mTotal;
-  updateMobileCarousel();
-  resetMobileTimer();
-}
-
-function goToSlideMobile(n) {
-  mCurrent = n;
-  updateMobileCarousel();
-  resetMobileTimer();
-}
-
-function resetMobileTimer() {
-  clearInterval(mAutoTimer);
-  mAutoTimer = setInterval(function() { moveMobileCarousel(1); }, 5000);
-}
-
-mAutoTimer = setInterval(function() { moveMobileCarousel(1); }, 5000);
+function hcmMove(dir) { hcmCurrent=(hcmCurrent+dir+hcmTotal)%hcmTotal; hcmUpdate(); hcmReset(); }
+function hcmGo(n) { hcmCurrent=n; hcmUpdate(); hcmReset(); }
+function hcmReset() { clearInterval(hcmTimer); hcmTimer=setInterval(function(){ hcmMove(1); },5000); }
+hcmTimer = setInterval(function(){ hcmMove(1); }, 5000);
 
 // Tour card colors
 var tones = ['#F9F8F6', '#F5F3EF', '#F0EEE9'];
