@@ -331,7 +331,7 @@ h1 em { font-style: italic; color: var(--green); }
 }
 .guide-intro-inner {
   max-width: 1100px; margin: 0 auto;
-  display: grid; grid-template-columns: 280px 1fr;
+  display: grid; grid-template-columns: 360px 1fr;
   gap: 4rem; align-items: center;
 }
 .guide-intro-photo img {
@@ -339,6 +339,8 @@ h1 em { font-style: italic; color: var(--green); }
   object-position: center top;
   border-radius: 2px;
   filter: grayscale(15%);
+  border: 3px solid var(--green);
+  box-shadow: 8px 8px 0px var(--green);
 }
 .guide-intro-tag {
   font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em;
@@ -352,6 +354,11 @@ h1 em { font-style: italic; color: var(--green); }
 .guide-intro-text {
   font-size: 0.9rem; line-height: 1.8;
   color: var(--mid); margin-bottom: 1.75rem;
+}
+
+/* Scroll offset fix — compensates for fixed navbar height */
+#tours, #destinations, #about, #reviews, #contact, #guide-intro {
+  scroll-margin-top: 135px;
 }
 
 .split { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--border); }
@@ -476,17 +483,17 @@ h1 em { font-style: italic; color: var(--green); }
 .destinations .section-title { color: var(--white); }
 .dest-grid {
   display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 1px; background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.1);
+  gap: 1px; background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.08);
   margin-top: 2.5rem;
 }
 .dest-card {
-  background: var(--blue);
+  background: rgba(255,255,255,0.04);
   padding: 2rem 1.5rem;
   transition: background 0.15s; cursor: pointer;
   border-left: 3px solid transparent;
 }
-.dest-card:hover { background: rgba(255,255,255,0.07); border-left-color: var(--yellow); }
+.dest-card:hover { background: rgba(255,255,255,0.09); border-left-color: var(--white); }
 .dest-season {
   font-size: 0.65rem; font-weight: 500;
   letter-spacing: 0.1em; text-transform: uppercase;
@@ -656,6 +663,7 @@ h1 em { font-style: italic; color: var(--green); }
   .guide-intro-inner { grid-template-columns: 1fr; gap: 2rem; }
   .guide-intro-photo img { aspect-ratio: 4/3; object-position: center 20%; }
   .guide-intro-title { font-size: 1.5rem; }
+  #tours, #destinations, #about, #reviews, #contact, #guide-intro { scroll-margin-top: 125px; }
 }
 
 /* Mobile (max 600px) */
@@ -716,8 +724,9 @@ h1 em { font-style: italic; color: var(--green); }
   /* Cart badge */
   .cart-btn { font-size: 0.72rem; }
 
-  /* WhatsApp float — move up on mobile */
-  .wa-float { bottom: 4.5rem; right: 1.25rem; width: 46px; height: 46px; font-size: 1.3rem; }
+  /* WhatsApp and cart float — aligned properly on mobile */
+  .wa-float { bottom: 5.5rem; right: 1.25rem; width: 46px; height: 46px; font-size: 1.3rem; }
+  .cart-icon { bottom: 1.25rem; right: 1.25rem; width: 46px; height: 46px; font-size: 1.1rem; }
 }
 
 /* CONTACT */
@@ -1184,14 +1193,13 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
 
 /* ADMIN PANEL */
 .admin-btn {
-  position:fixed; bottom:2rem; left:2rem; z-index:400;
-  width:44px; height:44px; border-radius:50%;
-  background:var(--blue); color:var(--white);
-  border:none; cursor:pointer; font-size:1rem;
-  transition:background 0.2s;
-  display:flex; align-items:center; justify-content:center;
+  background: none; border: none; cursor: pointer;
+  font-size: 0.75rem; color: var(--light);
+  text-decoration: none;
+  transition: color 0.15s;
+  padding: 0;
 }
-.admin-btn:hover { background:var(--dark); }
+.admin-btn:hover { color: var(--dark); }
 .admin-panel {
   position:fixed; top:0; left:0; bottom:0;
   width:min(360px,95vw);
@@ -1626,7 +1634,7 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
     <div class="split-label">Travel agency</div>
     <h2 class="split-title">Brazil<br>itineraries</h2>
     <p class="split-text">Amazon, Pantanal, Lençóis Maranhenses and more. We handle everything — local partners, logistics, recommendations. You just travel.</p>
-    <a href="#destinations" class="split-link-outline">Plan your trip</a>
+    <a href="#destinations" class="split-link-outline">See Brazil tours</a>
   </div>
 </section>
 
@@ -1794,28 +1802,28 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
       <div class="dest-name">Rio de Janeiro</div>
       <div class="dest-sub">City tours, gastronomy, culture, nature and day trips. Dozens of experiences, all tailor-made.</div>
       <div class="dest-days">1 to 7 days</div>
-      <div style="margin-top:0.75rem;font-size:0.7rem;color:var(--yellow);font-weight:500;letter-spacing:0.07em;">VIEW EXPERIENCES &#8594;</div>
+      <div style="margin-top:0.75rem;font-size:0.7rem;color:rgba(255,255,255,0.6);font-weight:500;letter-spacing:0.07em;">VIEW EXPERIENCES &#8594;</div>
     </div>
     <div class="dest-card" onclick="openAmazonMenu()" style="cursor:pointer;border-left:3px solid var(--yellow)">
       <div class="dest-season">Aug — Nov · year-round</div>
       <div class="dest-name">Amazon Rainforest</div>
       <div class="dest-sub">Expedition cruise on the Motor Yacht Tucano. UNESCO wilderness, naturalist guides, max 16 guests.</div>
       <div class="dest-days">4 to 7 nights · expedition cruise</div>
-      <div style="margin-top:0.75rem;font-size:0.7rem;color:var(--yellow);font-weight:500;letter-spacing:0.07em;">VIEW EXPEDITIONS →</div>
+      <div style="margin-top:0.75rem;font-size:0.7rem;color:rgba(255,255,255,0.6);font-weight:500;letter-spacing:0.07em;">VIEW EXPEDITIONS →</div>
     </div>
     <div class="dest-card" onclick="openPantanalMenu()" style="cursor:pointer;border-left:3px solid var(--yellow)">
       <div class="dest-season">Apr — Jun · Jul — Sep</div>
       <div class="dest-name">Pantanal</div>
       <div class="dest-sub">Jaguars, capybaras, 650 bird species. The world&#39;s largest tropical wetland. Tailor-made safaris.</div>
       <div class="dest-days">4 to 7 days</div>
-      <div style="margin-top:0.75rem;font-size:0.7rem;color:var(--yellow);font-weight:500;letter-spacing:0.07em;">VIEW EXPERIENCES &#8594;</div>
+      <div style="margin-top:0.75rem;font-size:0.7rem;color:rgba(255,255,255,0.6);font-weight:500;letter-spacing:0.07em;">VIEW EXPERIENCES &#8594;</div>
     </div>
     <div class="dest-card" onclick="openLencoisMenu()" style="cursor:pointer;border-left:3px solid var(--yellow)">
       <div class="dest-season">Jun — Sep</div>
       <div class="dest-name">Lençóis Maranhenses</div>
       <div class="dest-sub">White dunes, turquoise lagoons and the only exclusive eco-resort on the Rio Preguiças.</div>
       <div class="dest-days">4 to 7 nights</div>
-      <div style="margin-top:0.75rem;font-size:0.7rem;color:var(--yellow);font-weight:500;letter-spacing:0.07em;">VIEW ACCOMMODATION →</div>
+      <div style="margin-top:0.75rem;font-size:0.7rem;color:rgba(255,255,255,0.6);font-weight:500;letter-spacing:0.07em;">VIEW ACCOMMODATION →</div>
     </div>
   </div>
   <div style="text-align:center;margin-top:3rem;">
@@ -1832,6 +1840,7 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
     <p class="about-text">From a private food tour through Rio's local restaurants to an Amazon river cruise aboard the Motor Yacht Tucano, every experience is built around your interests — not a fixed group schedule.</p>
     <div class="about-milestones">
       <div class="milestone"><div class="milestone-year">2002</div><div class="milestone-text">Career in hospitality begins — restaurants and hotels across Brazil</div></div>
+      <div class="milestone"><div class="milestone-year">2011</div><div class="milestone-text">Opened his own restaurant in Rio de Janeiro — ran it for 8 years</div></div>
       <div class="milestone"><div class="milestone-year">2018</div><div class="milestone-text">Europe — vineyards in Switzerland, gastronomy schools in France and Spain</div></div>
       <div class="milestone"><div class="milestone-year">2020</div><div class="milestone-text">Tupi Tour founded — 100% focused on international travelers</div></div>
     </div>
@@ -1964,7 +1973,7 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
     <li><a href="#" onclick="openPrivacy(); return false;">Privacy Policy</a></li>
     <li><a href="#" onclick="openTerms(); return false;">Terms of Use</a></li>
   </ul>
-  <p class="footer-copy">© 2025 Tupi Tour · Cadastur certified</p>
+  <p class="footer-copy">© 2025 Tupi Tour · Cadastur certified · <button class="admin-btn" onclick="openAdmin()" title="Admin">Admin</button></p>
 </footer>
 
 
@@ -3809,7 +3818,7 @@ var TOUR_CAROUSELS = {
 </div>
 
 <!-- ADMIN PANEL -->
-<button class="admin-btn" onclick="openAdmin()" title="Admin — manage blocked dates">⚙</button>
+<!-- admin button moved to footer -->
 
 <div class="panel-overlay" id="adminOverlay" onclick="closeAdmin()"></div>
 <div class="admin-panel" id="adminPanel">
