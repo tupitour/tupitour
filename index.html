@@ -297,16 +297,20 @@ h1 em { font-style: italic; color: var(--green); }
   font-size: 0.88rem; font-weight: 500;
   color: var(--white); background: var(--dark);
   padding: 0.8rem 1.75rem; border-radius: 2px;
-  text-decoration: none; transition: background 0.15s;
+  border: 2px solid var(--dark);
+  text-decoration: none; transition: background 0.15s, color 0.15s;
+  display: inline-block;
 }
-.btn-primary:hover { background: var(--green); }
+.btn-primary:hover { background: var(--green); border-color: var(--green); }
 .btn-secondary {
-  font-size: 0.88rem; font-weight: 400;
-  color: var(--mid); text-decoration: none;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 1px; transition: color 0.15s, border-color 0.15s;
+  font-size: 0.88rem; font-weight: 500;
+  color: var(--dark); background: transparent;
+  padding: 0.8rem 1.75rem; border-radius: 2px;
+  border: 2px solid var(--dark);
+  text-decoration: none; transition: background 0.15s, color 0.15s;
+  display: inline-block;
 }
-.btn-secondary:hover { color: var(--dark); border-color: var(--dark); }
+.btn-secondary:hover { background: var(--dark); color: var(--white); }
 .hero-stats {
   display: flex; gap: 3rem;
   padding-top: 3rem; margin-top: 3rem;
@@ -320,22 +324,53 @@ h1 em { font-style: italic; color: var(--green); }
 .stat-label { font-size: 0.72rem; color: var(--light); margin-top: 0.25rem; }
 
 /* SPLIT */
+/* Guide intro section */
+.guide-intro {
+  border-top: 1px solid var(--border);
+  padding: 4rem 5vw;
+}
+.guide-intro-inner {
+  max-width: 1100px; margin: 0 auto;
+  display: grid; grid-template-columns: 280px 1fr;
+  gap: 4rem; align-items: center;
+}
+.guide-intro-photo img {
+  width: 100%; aspect-ratio: 3/4; object-fit: cover;
+  object-position: center top;
+  border-radius: 2px;
+  filter: grayscale(15%);
+}
+.guide-intro-tag {
+  font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--green); margin-bottom: 0.75rem;
+}
+.guide-intro-title {
+  font-family: 'Fraunces', serif; font-size: 2rem;
+  font-weight: 300; line-height: 1.2;
+  color: var(--dark); margin-bottom: 1.25rem;
+}
+.guide-intro-text {
+  font-size: 0.9rem; line-height: 1.8;
+  color: var(--mid); margin-bottom: 1.75rem;
+}
+
 .split { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--border); }
 .split-cell {
   padding: 5rem 5vw;
   border-right: 1px solid var(--border);
-  transition: background 0.2s;
+  background: #f0f0ed;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  transition: background 0.2s, border-top 0.2s;
+  border-top: 3px solid transparent;
 }
 .split-cell:last-child { border-right: none; }
-.split-cell:hover { background: var(--white); }
-.split-cell:hover .split-title { transform: scale(1.03); color: var(--green); }
-.split-title { transition: transform 0.25s, color 0.25s; display: inline-block; }
-.split-cell { transition: background 0.2s, border-top 0.2s; border-top: 3px solid transparent; }
-.split-cell:hover { background: var(--white); border-top: 3px solid var(--green); }
+.split-cell:hover { background: #e8e8e4; border-top: 3px solid var(--green); }
+.split-cell:hover .split-title { color: var(--green); }
+.split-title { transition: color 0.25s; display: inline-block; }
 .split-num {
   font-family: 'Fraunces', serif;
   font-size: 4rem; font-weight: 300;
-  color: var(--border); line-height: 1; margin-bottom: 1.5rem;
+  color: #b0ada6; line-height: 1; margin-bottom: 1.5rem;
 }
 .split-label {
   font-size: 0.72rem; font-weight: 500;
@@ -349,14 +384,24 @@ h1 em { font-style: italic; color: var(--green); }
   color: var(--dark); margin-bottom: 1rem;
 }
 .split-text { font-size: 0.88rem; line-height: 1.75; color: var(--mid); margin-bottom: 2rem; max-width: 360px; }
-.split-link {
-  font-size: 0.82rem; font-weight: 500;
-  color: var(--dark); text-decoration: none;
-  display: inline-flex; align-items: center; gap: 8px;
-  border-bottom: 1px solid var(--dark); padding-bottom: 2px;
-  transition: color 0.15s, border-color 0.15s;
+.split-link-solid {
+  font-size: 0.88rem; font-weight: 500;
+  color: var(--white); background: var(--dark);
+  padding: 0.8rem 1.75rem; border-radius: 2px;
+  border: 2px solid var(--dark);
+  text-decoration: none; transition: background 0.15s, color 0.15s;
+  display: inline-block;
 }
-.split-link:hover { color: var(--green); border-color: var(--green); }
+.split-link-solid:hover { background: var(--green); border-color: var(--green); }
+.split-link-outline {
+  font-size: 0.88rem; font-weight: 500;
+  color: var(--dark); background: transparent;
+  padding: 0.8rem 1.75rem; border-radius: 2px;
+  border: 2px solid var(--dark);
+  text-decoration: none; transition: background 0.15s, color 0.15s;
+  display: inline-block;
+}
+.split-link-outline:hover { background: var(--dark); color: var(--white); }
 
 /* TOURS */
 .tours { padding: 5rem 5vw; border-top: 1px solid var(--border); }
@@ -426,7 +471,7 @@ h1 em { font-style: italic; color: var(--green); }
 
 
 /* DESTINATIONS */
-.destinations { padding: 5rem 5vw; border-top: 1px solid var(--border); background: var(--blue); }
+.destinations { padding: 5rem 5vw; border-top: 1px solid var(--border); background: #2a2a27; }
 .destinations .section-tag { color: var(--yellow); border-bottom-color: var(--yellow); }
 .destinations .section-title { color: var(--white); }
 .dest-grid {
@@ -607,6 +652,10 @@ h1 em { font-style: italic; color: var(--green); }
   footer { flex-direction: column; gap: 1.5rem; text-align: center; }
   .hero-carousel-mobile { display: block; }
   .footer-links { flex-wrap: wrap; justify-content: center; }
+  .guide-intro { padding: 2.5rem 4vw; }
+  .guide-intro-inner { grid-template-columns: 1fr; gap: 2rem; }
+  .guide-intro-photo img { aspect-ratio: 4/3; object-position: center 20%; }
+  .guide-intro-title { font-size: 1.5rem; }
 }
 
 /* Mobile (max 600px) */
@@ -1447,7 +1496,7 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
     <p class="hero-sub">Private guided tours in Rio de Janeiro and tailor-made itineraries across Brazil. Amazon river cruise, Pantanal jaguar safari, Lençóis Maranhenses. English-speaking. 20+ years experience.</p>
     <div class="hero-actions">
       <a href="#tours" class="btn-primary">See Rio tours</a>
-      <a href="#destinations" class="btn-secondary">Plan a Brazil trip →</a>
+      <a href="#destinations" class="btn-secondary">Plan a Brazil trip</a>
     </div>
     <div class="hero-stats">
       <div style="display:flex;flex-direction:column;justify-content:flex-start"><div class="stat-num">20+</div><div class="stat-label">Years in hospitality</div></div>
@@ -1549,30 +1598,44 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
   </div>
 </div>
 
+<!-- GUIDE INTRO SECTION -->
+<section class="guide-intro" id="guide-intro">
+  <div class="guide-intro-inner">
+    <div class="guide-intro-photo">
+      <img src="imgs/flavio-tupinamba-private-tour-guide-rio-de-janeiro-brazil.jpg" alt="Flávio Tupinambá — private tour guide Rio de Janeiro Brazil" loading="lazy">
+    </div>
+    <div class="guide-intro-content">
+      <div class="guide-intro-tag">Your guide</div>
+      <h2 class="guide-intro-title">Built by Flávio.<br>Led by Flávio.</h2>
+      <p class="guide-intro-text">Every itinerary on this site is planned personally by Flávio — Rio tours, Amazon expeditions, Pantanal safaris, Lençóis Maranhenses. Rio tours are led by him directly. When he is committed to another expedition, tours are entrusted exclusively to a small group of senior guides handpicked for their knowledge, English and standards.</p>
+      <a href="#about" class="btn-primary" onclick="setTimeout(function(){document.getElementById('about').scrollIntoView({behavior:'smooth'})},10);return false;">Know your guide Flávio</a>
+    </div>
+  </div>
+</section>
+
 <section class="split">
   <div class="split-cell">
     <div class="split-num">01</div>
     <div class="split-label">Guided tours</div>
     <h2 class="split-title">Tours in<br>Rio de Janeiro</h2>
     <p class="split-text">Private guided tours with certified local guides. Fixed prices, clear information, pick-up anywhere in the city. Book directly online.</p>
-    <a href="#tours" class="split-link">See all tours →</a>
+    <a href="#tours" class="split-link-solid">See Rio tours</a>
   </div>
   <div class="split-cell">
     <div class="split-num">02</div>
     <div class="split-label">Travel agency</div>
     <h2 class="split-title">Brazil<br>itineraries</h2>
     <p class="split-text">Amazon, Pantanal, Lençóis Maranhenses and more. We handle everything — local partners, logistics, recommendations. You just travel.</p>
-    <a href="#destinations" class="split-link">Plan your trip →</a>
+    <a href="#destinations" class="split-link-outline">Plan your trip</a>
   </div>
 </section>
 
 <section class="tours" id="tours">
-  <div class="section-head">
+  <div class="section-head" style="justify-content:center;text-align:center;flex-direction:column;align-items:center;">
     <div>
       <div class="section-tag">Rio de Janeiro</div>
       <div class="section-title">Private guided tours</div>
     </div>
-    <a href="#contact" class="view-all">Request a custom tour</a>
   </div>
   <div class="tours-grid">
     <div class="tour-card" onclick="openTour('City Tour Rio')">
@@ -1710,12 +1773,21 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
       <div class="tour-price">On request <span>— tailored for your group</span></div>
       <div class="tour-arrow" onclick="openTour('Group Tours — 5+ people')" style="cursor:pointer">→</div>
     </div>
+    <div class="tour-card" onclick="openTour('Personalize Your Tour in Rio')">
+      <div class="tour-cat">Custom</div>
+      <div class="tour-name" onclick="openTour('Personalize Your Tour in Rio')" style="cursor:pointer">Personalize Your Tour in Rio</div>
+      <div class="tour-meta">Your hours · your group · your locations</div>
+      <div class="tour-price">On request <span>— tailored for you</span></div>
+      <div class="tour-arrow" onclick="openTour('Personalize Your Tour in Rio')" style="cursor:pointer">→</div>
+    </div>
   </div>
 </section>
 
 <section class="destinations" id="destinations">
-  <div class="section-tag">Travel agency</div>
-  <div class="section-title">Brazil itineraries</div>
+  <div style="text-align:center;margin-bottom:3rem;">
+    <div class="section-tag">Travel agency</div>
+    <div class="section-title">Brazil itineraries</div>
+  </div>
   <div class="dest-grid">
     <div class="dest-card" onclick="openRioMenu()" style="cursor:pointer;border-left:3px solid var(--yellow)">
       <div class="dest-season">Dec — Mar · Jul</div>
@@ -1746,14 +1818,18 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
       <div style="margin-top:0.75rem;font-size:0.7rem;color:var(--yellow);font-weight:500;letter-spacing:0.07em;">VIEW ACCOMMODATION →</div>
     </div>
   </div>
+  <div style="text-align:center;margin-top:3rem;">
+    <p style="font-size:0.88rem;color:rgba(255,255,255,0.55);margin-bottom:1.25rem;">Looking for somewhere else in Brazil?</p>
+    <a href="#contact" onclick="setTimeout(function(){document.getElementById('contact').scrollIntoView({behavior:'smooth'})},10);return false;" class="split-link-outline" style="border-color:rgba(255,255,255,0.4);color:var(--white);" onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.borderColor='var(--white)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(255,255,255,0.4)'">Get in touch — we'll plan it</a>
+  </div>
 </section>
 
 <section class="about" id="about">
   <div class="about-left">
     <div class="about-label">Who we are</div>
     <h2 class="about-title">Private guide in Rio de Janeiro —<br>gastronomy, culture and <em>local experience.</em></h2>
-    <p class="about-text">Tupi Tour was built on 20 years of working in Brazilian hospitality — restaurants, hotels, and travel. Flávio Tupinambá is a certified private guide in Rio de Janeiro, fluent in English and Spanish, and a trained chef. He personally leads most tours and handpicks every partner guide.</p>
-    <p class="about-text">From a private food tour through Rio's local restaurants to an Amazon river cruise aboard the Motor Yacht Tucano, every itinerary is built around your interests — not a fixed group schedule.</p>
+    <p class="about-text">Tupi Tour was built on 20 years of working in Brazilian hospitality — restaurants, hotels, and travel. Flávio Tupinambá is a certified private guide in Rio de Janeiro, fluent in English and Spanish, and a trained chef. Every itinerary across Brazil is planned personally by Flávio — from a day tour in Rio to a full Amazon expedition. Rio tours are led by him directly; when he is away on another trip, tours are handed only to a small group of senior guides selected and trusted by him.</p>
+    <p class="about-text">From a private food tour through Rio's local restaurants to an Amazon river cruise aboard the Motor Yacht Tucano, every experience is built around your interests — not a fixed group schedule.</p>
     <div class="about-milestones">
       <div class="milestone"><div class="milestone-year">2002</div><div class="milestone-text">Career in hospitality begins — restaurants and hotels across Brazil</div></div>
       <div class="milestone"><div class="milestone-year">2018</div><div class="milestone-text">Europe — vineyards in Switzerland, gastronomy schools in France and Spain</div></div>
@@ -2027,6 +2103,12 @@ const tours = {
     desc:"Any tour in Rio or surroundings, customized for larger groups. We provide the right vehicle, the right number of guides, and the logistics to make it seamless. Contact us with your group size, dates and interests.",
     includes:["Certified guides","Private transportation for large groups"],
     excludes:["Varies by tour"]
+  },
+  "Personalize Your Tour in Rio": {
+    type:"contact", duration:"You decide", group:"Any size",
+    desc:"No fixed itinerary. No fixed group size. No fixed hours. You tell us what moves you — a mix of two tours in one day, a focus on food and culture, a morning in the forest and an afternoon on the water — and we build it around you. Any combination of experiences in our menu is possible. Single travelers, couples, families, any group size. Dates, pace and locations: your call. Price on request, based on your choices.",
+    includes:["Certified guide (Flávio or handpicked senior guide)","Private transportation","Pick-up & drop-off anywhere in Rio","Personalized planning"],
+    excludes:["Attraction tickets","Food and drinks","Souvenirs"]
   }
 };
 
@@ -2125,6 +2207,7 @@ var TOUR_PHOTOS = {
   "City Tour Rio — 3 days": { srcs:["imgs/christ-redeemer-close-up-rio-de-janeiro.jpg","imgs/botafogo-bay-sunset-christ-redeemer-silhouette.jpg","imgs/christ-redeemer-aerial-view-rio-de-janeiro.jpg","imgs/copacabana-boardwalk-aerial-mosaic-rio.jpg","imgs/sugar-loaf-mountain-sunrise-fog-rio-de-janeiro.jpg","imgs/theatro-municipal-aerial-view-rio-de-janeiro.jpg","imgs/real-gabinete-portugues-leitura-interior-rio.jpg"], alts:["Christ the Redeemer close up blue sky Rio de Janeiro","Botafogo Bay sunset Christ the Redeemer silhouette Rio de Janeiro","Christ the Redeemer aerial view Corcovado Rio de Janeiro","Copacabana boardwalk mosaic aerial view Rio de Janeiro","Sugar Loaf mountain sunrise fog Rio de Janeiro","Theatro Municipal aerial view Rio de Janeiro","Real Gabinete Portugues de Leitura interior Rio de Janeiro"] },
   "City Tour Rio — 5 days": { srcs:["imgs/christ-redeemer-close-up-rio-de-janeiro.jpg","imgs/botafogo-bay-sunset-christ-redeemer-silhouette.jpg","imgs/christ-redeemer-aerial-view-rio-de-janeiro.jpg","imgs/copacabana-boardwalk-aerial-mosaic-rio.jpg","imgs/sugar-loaf-mountain-sunrise-fog-rio-de-janeiro.jpg","imgs/theatro-municipal-aerial-view-rio-de-janeiro.jpg","imgs/real-gabinete-portugues-leitura-interior-rio.jpg"], alts:["Christ the Redeemer close up blue sky Rio de Janeiro","Botafogo Bay sunset Christ the Redeemer silhouette Rio de Janeiro","Christ the Redeemer aerial view Corcovado Rio de Janeiro","Copacabana boardwalk mosaic aerial view Rio de Janeiro","Sugar Loaf mountain sunrise fog Rio de Janeiro","Theatro Municipal aerial view Rio de Janeiro","Real Gabinete Portugues de Leitura interior Rio de Janeiro"] },
   "Group Tours — 5+ people": { srcs:["imgs/christ-redeemer-close-up-rio-de-janeiro.jpg","imgs/botafogo-bay-sunset-christ-redeemer-silhouette.jpg","imgs/christ-redeemer-aerial-view-rio-de-janeiro.jpg","imgs/copacabana-boardwalk-aerial-mosaic-rio.jpg","imgs/sugar-loaf-mountain-sunrise-fog-rio-de-janeiro.jpg","imgs/theatro-municipal-aerial-view-rio-de-janeiro.jpg","imgs/real-gabinete-portugues-leitura-interior-rio.jpg"], alts:["Christ the Redeemer close up blue sky Rio de Janeiro","Botafogo Bay sunset Christ the Redeemer silhouette Rio de Janeiro","Christ the Redeemer aerial view Corcovado Rio de Janeiro","Copacabana boardwalk mosaic aerial view Rio de Janeiro","Sugar Loaf mountain sunrise fog Rio de Janeiro","Theatro Municipal aerial view Rio de Janeiro","Real Gabinete Portugues de Leitura interior Rio de Janeiro"] },
+  "Personalize Your Tour in Rio": { srcs:["imgs/christ-redeemer-close-up-rio-de-janeiro.jpg","imgs/botafogo-bay-sunset-christ-redeemer-silhouette.jpg","imgs/christ-redeemer-aerial-view-rio-de-janeiro.jpg","imgs/copacabana-boardwalk-aerial-mosaic-rio.jpg","imgs/sugar-loaf-mountain-sunrise-fog-rio-de-janeiro.jpg","imgs/theatro-municipal-aerial-view-rio-de-janeiro.jpg","imgs/real-gabinete-portugues-leitura-interior-rio.jpg"], alts:["Christ the Redeemer close up blue sky Rio de Janeiro","Botafogo Bay sunset Christ the Redeemer silhouette Rio de Janeiro","Christ the Redeemer aerial view Corcovado Rio de Janeiro","Copacabana boardwalk mosaic aerial view Rio de Janeiro","Sugar Loaf mountain sunrise fog Rio de Janeiro","Theatro Municipal aerial view Rio de Janeiro","Real Gabinete Portugues de Leitura interior Rio de Janeiro"] },
   "Airport Arrival Tour": { srcs:["imgs/christ-redeemer-close-up-rio-de-janeiro.jpg","imgs/botafogo-bay-sunset-christ-redeemer-silhouette.jpg","imgs/christ-redeemer-aerial-view-rio-de-janeiro.jpg","imgs/copacabana-boardwalk-aerial-mosaic-rio.jpg","imgs/sugar-loaf-mountain-sunrise-fog-rio-de-janeiro.jpg","imgs/theatro-municipal-aerial-view-rio-de-janeiro.jpg","imgs/real-gabinete-portugues-leitura-interior-rio.jpg"], alts:["Christ the Redeemer close up blue sky Rio de Janeiro","Botafogo Bay sunset Christ the Redeemer silhouette Rio de Janeiro","Christ the Redeemer aerial view Corcovado Rio de Janeiro","Copacabana boardwalk mosaic aerial view Rio de Janeiro","Sugar Loaf mountain sunrise fog Rio de Janeiro","Theatro Municipal aerial view Rio de Janeiro","Real Gabinete Portugues de Leitura interior Rio de Janeiro"] },
   "Airport Departure Tour": { srcs:["imgs/christ-redeemer-close-up-rio-de-janeiro.jpg","imgs/botafogo-bay-sunset-christ-redeemer-silhouette.jpg","imgs/christ-redeemer-aerial-view-rio-de-janeiro.jpg","imgs/copacabana-boardwalk-aerial-mosaic-rio.jpg","imgs/sugar-loaf-mountain-sunrise-fog-rio-de-janeiro.jpg","imgs/theatro-municipal-aerial-view-rio-de-janeiro.jpg","imgs/real-gabinete-portugues-leitura-interior-rio.jpg"], alts:["Christ the Redeemer close up blue sky Rio de Janeiro","Botafogo Bay sunset Christ the Redeemer silhouette Rio de Janeiro","Christ the Redeemer aerial view Corcovado Rio de Janeiro","Copacabana boardwalk mosaic aerial view Rio de Janeiro","Sugar Loaf mountain sunrise fog Rio de Janeiro","Theatro Municipal aerial view Rio de Janeiro","Real Gabinete Portugues de Leitura interior Rio de Janeiro"] },
   "Tijuca Forest": { srcs:["imgs/tijuca-national-park-entrance-gate-rio-de-janeiro.jpg","imgs/taunay-waterfall-tijuca-forest-rio-de-janeiro.jpg","imgs/cachoeira-do-chuveiro-waterfall-tijuca-forest-rio.jpg","imgs/marmoset-monkey-tijuca-forest-rio-de-janeiro.jpg","imgs/coati-tijuca-forest-rio-de-janeiro.jpg"], alts:["Tijuca National Park entrance gate Rio de Janeiro","Taunay waterfall Tijuca Forest Rio de Janeiro","Cachoeira do Chuveiro waterfall Tijuca Forest Rio","Marmoset monkey Tijuca Forest Rio de Janeiro","Coati Tijuca Forest Rio de Janeiro"] },
@@ -2288,7 +2371,7 @@ function getPanelIcon(name) {
     "Pantanal Carioca":"🚤","Favela Tour — Rocinha":"🏘","Sunrise Tour":"🌅",
     "Paragliding":"🪂","Hawaiian Outrigger Canoe":"🛶","Diving":"🤿",
     "Match Day Experience":"⚽","Petrópolis":"🏰","Ilha Grande · Búzios · Paraty":"⛵",
-    "Private Transfer":"🚗","Group Tours — 5+ people":"👥"
+    "Private Transfer":"🚗","Group Tours — 5+ people":"👥","Personalize Your Tour in Rio":"✨"
   };
   return icons[name] || "🌎";
 }
