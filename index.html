@@ -179,6 +179,12 @@
 <!-- ═══ BLOG BREADCRUMB SCHEMA (used by blog pages) ═══ -->
 
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script type="text/javascript">
+  (function(){
+    emailjs.init({ publicKey: "e5QBYa4lKw0kMhJtN" });
+  })();
+</script>
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; font-size: 16px; }
@@ -1926,23 +1932,23 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
     <p class="contact-desc">Tell us where you want to go and how many days you have. We'll come back with a clear proposal within 48 hours.</p>
     <div class="contact-info">
       <div class="contact-info-item"><strong>WhatsApp</strong> <a href="https://wa.me/5521988042225?text=Hi!%20I%20found%20Tupi%20Tour%20online%20and%20would%20like%20to%20plan%20a%20trip." target="_blank" rel="noopener" style="color:var(--green);text-decoration:none">+55 21 98804-2225</a></div>
-      <div class="contact-info-item"><strong>Email</strong> contact@tupitour.com</div>
+      <div class="contact-info-item"><strong>Email</strong> flavio@tupitour.com</div>
       <div class="contact-info-item"><strong>Based in</strong> Rio de Janeiro, Brazil</div>
     </div>
   </div>
-  <!-- TODO: Replace FORMSPREE_ID with your Formspree form ID from formspree.io -->
-  <form class="contact-form" action="https://formspree.io/f/FORMSPREE_ID" method="POST">
+  <!-- EmailJS contact form — Service: service_co6s9au / Template: template_0uyyhcj -->
+  <form class="contact-form" id="contactForm" onsubmit="return false;">
     <div class="form-row">
-      <div class="field"><label>First name</label><input type="text" placeholder="Jane"></div>
-      <div class="field"><label>Last name</label><input type="text" placeholder="Smith"></div>
+      <div class="field"><label>First name</label><input type="text" id="cf_first" placeholder="Jane"></div>
+      <div class="field"><label>Last name</label><input type="text" id="cf_last" placeholder="Smith"></div>
     </div>
     <div class="form-row">
-      <div class="field"><label>Email</label><input type="email" placeholder="jane@email.com"></div>
-      <div class="field"><label>Country</label><input type="text" placeholder="United States"></div>
+      <div class="field"><label>Email</label><input type="email" id="cf_email" placeholder="jane@email.com"></div>
+      <div class="field"><label>Country</label><input type="text" id="cf_country" placeholder="United States"></div>
     </div>
     <div class="field">
       <label>I'm interested in</label>
-      <select>
+      <select id="cf_tour">
         <option value="">Select...</option>
         <option>Rio de Janeiro tours</option>
         <option>Amazon Rainforest</option>
@@ -1954,9 +1960,9 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
     </div>
     <div class="field">
       <label>Tell us about your trip</label>
-      <textarea placeholder="Dates, number of people, interests, budget — anything helps."></textarea>
+      <textarea id="cf_message" placeholder="Dates, number of people, interests, budget — anything helps."></textarea>
     </div>
-    <button type="submit" class="form-submit">Send request</button>
+    <button type="button" class="form-submit" id="cf_submit" onclick="submitContactForm()">Send request</button>
   </form>
 </section>
 
@@ -2345,24 +2351,16 @@ function sendInquiry(tourName) {
   }
   emailEl.style.borderColor = '';
   if (btn) { btn.textContent = 'Sending...'; btn.disabled = true; }
-  // TODO: Replace with your Formspree form ID — e.g. https://formspree.io/f/YOURFORMID
-  fetch('https://formspree.io/f/FORMSPREE_ID', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify({ tour: tourName, name: name, email: email, message: msg })
-  })
-  .then(function(r) {
-    if (r.ok) {
-      if (btn) { btn.textContent = "Sent! We'll be in touch within 48h."; btn.style.background = '#1B2F6E'; }
-    } else {
-      // Fallback: open mail client
-      var sub = encodeURIComponent('Tour Enquiry — ' + tourName);
-      var body = encodeURIComponent('Name: ' + name + '\nEmail: ' + email + '\nTour: ' + tourName + '\n\n' + msg);
-      window.open('mailto:flavio@tupitour.com?subject=' + sub + '&body=' + body);
-      if (btn) { btn.textContent = "Email opened. We'll be in touch!"; btn.style.background = '#1B7A3E'; }
-    }
-  })
-  .catch(function() {
+  emailjs.send('service_co6s9au', 'template_0uyyhcj', {
+    name: name,
+    email: email,
+    tour_name: tourName || 'Panel enquiry',
+    message: msg
+  }).then(function() {
+    if (btn) { btn.textContent = "Sent! We'll be in touch within 48h."; btn.style.background = '#1B2F6E'; }
+  }, function(error) {
+    console.error('EmailJS error:', error);
+    // Fallback: open mail client
     var sub = encodeURIComponent('Tour Enquiry — ' + tourName);
     var body = encodeURIComponent('Name: ' + name + '\nEmail: ' + email + '\nTour: ' + tourName + '\n\n' + msg);
     window.open('mailto:flavio@tupitour.com?subject=' + sub + '&body=' + body);
@@ -3254,52 +3252,53 @@ function renderAdminList(blocked) {
   });
 }
 
-function handleSubmit(e) {
-  e.preventDefault();
-  var form = e.target;
-  var btn = form.querySelector('.form-submit');
-  var emailInput = form.querySelector('input[type="email"]');
+function submitContactForm() {
+  var btn = document.getElementById('cf_submit');
+  var firstEl = document.getElementById('cf_first');
+  var emailEl = document.getElementById('cf_email');
+  var first = firstEl ? firstEl.value.trim() : '';
+  var last = document.getElementById('cf_last') ? document.getElementById('cf_last').value.trim() : '';
+  var email = emailEl ? emailEl.value.trim() : '';
+  var country = document.getElementById('cf_country') ? document.getElementById('cf_country').value.trim() : '';
+  var tour = document.getElementById('cf_tour') ? document.getElementById('cf_tour').value : '';
+  var message = document.getElementById('cf_message') ? document.getElementById('cf_message').value.trim() : '';
 
-  // Validar email
-  if (emailInput && !isValidEmail(emailInput.value.trim())) {
-    emailInput.style.borderColor = '#c0392b';
-    emailInput.focus();
+  if (!first) { alert('Please fill in your first name.'); return; }
+  if (!isValidEmail(email)) {
+    if (emailEl) { emailEl.style.borderColor = '#c0392b'; emailEl.focus(); }
     var errId = 'contactEmailErr';
     if (!document.getElementById(errId)) {
       var err = document.createElement('div');
       err.id = errId;
       err.style.cssText = 'font-size:0.72rem;color:#c0392b;margin-top:0.2rem;';
       err.textContent = 'Please enter a valid email address.';
-      emailInput.parentNode.appendChild(err);
+      if (emailEl) emailEl.parentNode.appendChild(err);
     }
     return;
-  } else if (emailInput) {
-    emailInput.style.borderColor = '';
+  } else {
+    if (emailEl) emailEl.style.borderColor = '';
     var existing = document.getElementById('contactEmailErr');
     if (existing) existing.remove();
   }
 
   btn.textContent = 'Sending...';
   btn.disabled = true;
-  var data = new FormData(form);
-  // TODO: Replace FORMSPREE_ID with your actual Formspree form ID
-  fetch('https://formspree.io/f/FORMSPREE_ID', {
-    method: 'POST',
-    body: data,
-    headers: { 'Accept': 'application/json' }
-  })
-  .then(function(r) {
-    if (r.ok) {
-      btn.textContent = "Sent — we'll be in touch within 48h";
-      btn.style.background = '#1B2F6E';
-    } else {
-      btn.textContent = 'Error — try WhatsApp instead';
-      btn.style.background = '#c0392b';
-      btn.disabled = false;
-    }
-  })
-  .catch(function() {
-    btn.textContent = 'Error — try WhatsApp instead';
+
+  emailjs.send('service_co6s9au', 'template_0uyyhcj', {
+    name: first + (last ? ' ' + last : ''),
+    email: email,
+    tour_name: tour || 'General enquiry',
+    message: (country ? 'Country: ' + country + '\n' : '') + message
+  }).then(function() {
+    btn.textContent = "Sent — we'll be in touch within 48h";
+    btn.style.background = '#1B2F6E';
+  }, function(error) {
+    console.error('EmailJS error:', error);
+    // Fallback: open mail client
+    var sub = encodeURIComponent('Trip Enquiry — ' + (tour || 'General'));
+    var body = encodeURIComponent('Name: ' + first + ' ' + last + '\nEmail: ' + email + '\nCountry: ' + country + '\nInterested in: ' + tour + '\n\n' + message);
+    window.open('mailto:flavio@tupitour.com?subject=' + sub + '&body=' + body);
+    btn.textContent = 'Error — email client opened';
     btn.style.background = '#c0392b';
     btn.disabled = false;
   });
