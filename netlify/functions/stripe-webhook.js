@@ -45,13 +45,10 @@ function buildClientReceiptHtml(session) {
 
           <!-- Logo / brand -->
           <tr>
-            <td align="center" style="padding:32px 40px 24px;">
-              <p style="font-family:Georgia,serif;font-size:22px;font-weight:700;color:#111111;margin:0;letter-spacing:-0.5px;">
-                Tupi Tour
-              </p>
-              <p style="font-size:12px;color:#AAAAAA;margin:4px 0 0;letter-spacing:0.1em;text-transform:uppercase;">
-                Private Tours · Brazil
-              </p>
+            <td align="center" style="padding:32px 40px 20px;">
+              <img src="https://www.tupitour.com/imgs/logo.png"
+                   alt="Tupi Tour" width="140"
+                   style="display:block;height:auto;border:0;">
             </td>
           </tr>
 
