@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Blog — Brazil Guides & Tips | Tupi Tour</title>
+<meta name="description" content="Expert travel guides to Brazil — Rio de Janeiro, Amazon, Pantanal, Lençóis Maranhenses. Written by certified local guides with 20+ years of experience.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://www.tupitour.com/blog.html">
+
+<!-- hreflang: EN / ES -->
+<link rel="alternate" hreflang="en" href="https://www.tupitour.com/blog.html">
+<link rel="alternate" hreflang="es" href="https://www.tupitour.com/es/blog.html">
+<link rel="alternate" hreflang="x-default" href="https://www.tupitour.com/blog.html">
+
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --green: #1B7A3E; --yellow: #F5C518; --blue: #1B2F6E;
+  --dark: #111111; --mid: #555555; --light: #AAAAAA;
+  --bg: #F8F7F4; --white: #FFFFFF; --border: #E5E3DE;
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--dark); -webkit-font-smoothing: antialiased; }
+
+/* ── color bar ── */
+.color-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 200; height: 4px;
+  background: linear-gradient(90deg, var(--green) 0%, var(--green) 40%, var(--yellow) 40%, var(--yellow) 70%, var(--blue) 70%, var(--blue) 100%); }
+
+/* ── nav ── */
+nav { position: fixed; top: 4px; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 5vw; height: 80px; background: var(--bg); border-bottom: 1px solid var(--border); }
+.nav-logo img { height: 52px; width: auto; display: block; }
+.nav-links { display: flex; gap: 2rem; list-style: none; }
+.nav-links a { font-size: 0.95rem; font-weight: 400; color: var(--mid); text-decoration: none; transition: color 0.15s; }
+.nav-links a:hover, .nav-links a.active { color: var(--dark); }
+.nav-btn { font-size: 0.82rem; font-weight: 500; color: var(--white); background: var(--green);
+  padding: 0.5rem 1.25rem; border-radius: 2px; text-decoration: none; }
+
+/* ── blog page ── */
+.blog-page { max-width: 860px; margin: 120px auto 5rem; padding: 0 5vw; }
+
+.blog-header { margin-bottom: 3.5rem; }
+.blog-header .section-tag {
+  font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--green); border-bottom: 2px solid var(--yellow); padding-bottom: 2px;
+  display: inline-block; margin-bottom: 1rem;
+}
+.blog-header h1 {
+  font-family: 'Fraunces', serif; font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 300; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1rem;
+}
+.blog-header p { font-size: 1rem; font-weight: 300; line-height: 1.75; color: var(--mid); max-width: 560px; }
+
+/* ── article cards ── */
+.blog-grid { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+
+.blog-card {
+  background: var(--bg); padding: 2rem 2rem 2rem 2rem;
+  display: grid; grid-template-columns: 1fr auto;
+  align-items: start; gap: 1rem;
+  text-decoration: none; color: inherit;
+  transition: background 0.15s;
+  position: relative;
+}
+.blog-card:hover { background: var(--white); }
+
+.blog-card-content { flex: 1; }
+.blog-card-tag {
+  font-size: 0.65rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--light); margin-bottom: 0.6rem; display: block;
+}
+.blog-card h2 {
+  font-family: 'Fraunces', serif; font-size: 1.3rem; font-weight: 400;
+  line-height: 1.25; color: var(--dark); margin-bottom: 0.6rem;
+  transition: color 0.15s;
+}
+.blog-card:hover h2 { color: var(--green); }
+.blog-card p { font-size: 0.88rem; line-height: 1.7; color: var(--mid); max-width: 560px; }
+.blog-card-meta { font-size: 0.72rem; color: var(--light); margin-top: 0.75rem; }
+.blog-card-arrow { font-size: 1rem; color: var(--light); align-self: center; transition: color 0.15s; }
+.blog-card:hover .blog-card-arrow { color: var(--green); }
+
+/* ── lang strip ── */
+.lang-note {
+  margin-top: 3.5rem; padding: 1.5rem 2rem;
+  background: #f0f0ec; border-left: 3px solid var(--yellow);
+  font-size: 0.88rem; color: var(--mid); line-height: 1.6;
+}
+.lang-note a { color: var(--green); text-decoration: none; font-weight: 500; }
+.lang-note a:hover { text-decoration: underline; }
+
+/* ── footer ── */
+footer { padding: 2rem 5vw; border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; }
+.footer-copy { font-size: 0.72rem; color: var(--light); }
+.footer-back { font-size: 0.78rem; color: var(--mid); text-decoration: none; }
+.footer-back:hover { color: var(--dark); }
+
+/* ── responsive ── */
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .blog-card { grid-template-columns: 1fr; }
+  .blog-card-arrow { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="color-bar"></div>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <img src="/imgs/logo.png" alt="Tupi Tour" onerror="this.style.display='none'">
+  </a>
+  <ul class="nav-links">
+    <li><a href="/#tours">Rio Tours</a></li>
+    <li><a href="/#destinations">Brazil</a></li>
+    <li><a href="/blog.html" class="active">Blog</a></li>
+    <li><a href="/#about">About</a></li>
+    <li><a href="/#contact">Contact</a></li>
+  </ul>
+  <a href="/#contact" class="nav-btn">Get in touch</a>
+</nav>
+
+<div class="blog-page">
+
+  <div class="blog-header">
+    <span class="section-tag">Travel Guides</span>
+    <h1>Brazil — from the inside</h1>
+    <p>Guides written by people who live and work here. Not marketing copy. Practical information about Rio, the Amazon, the Pantanal and Lençóis Maranhenses — what to see, when to go, what everyone else gets wrong.</p>
+  </div>
+
+  <div class="blog-grid">
+
+    <a href="/blog/things-to-do-rio-de-janeiro.html" class="blog-card">
+      <div class="blog-card-content">
+        <span class="blog-card-tag">Rio de Janeiro</span>
+        <h2>Best Things to Do in Rio de Janeiro — A Local's Guide</h2>
+        <p>Christ the Redeemer at sunrise, Tijuca Forest, the food tour, favela Rocinha, hidden viewpoints. What most itineraries miss — and how to fix that.</p>
+        <div class="blog-card-meta">By Flávio Tupinambá &nbsp;·&nbsp; 8 min read</div>
+      </div>
+      <span class="blog-card-arrow">→</span>
+    </a>
+
+    <a href="/blog/amazon-expedition-guide-brazil.html" class="blog-card">
+      <div class="blog-card-content">
+        <span class="blog-card-tag">Amazon</span>
+        <h2>Amazon River Cruise Brazil — Complete Guide to Motor Yacht Tucano</h2>
+        <p>Wildlife, best season, 4-night vs 6-night, practical tips for the UNESCO Central Amazon Conservation Complex near Manaus.</p>
+        <div class="blog-card-meta">By Flávio Tupinambá &nbsp;·&nbsp; 7 min read</div>
+      </div>
+      <span class="blog-card-arrow">→</span>
+    </a>
+
+    <a href="/blog/pantanal-jaguar-safari-guide.html" class="blog-card">
+      <div class="blog-card-content">
+        <span class="blog-card-tag">Pantanal</span>
+        <h2>Pantanal Jaguar Safari Brazil — Best Season, Araras Eco Lodge Guide</h2>
+        <p>Best season July–October (90%+ sighting rate), Araras Eco Lodge review, daily activities, how to get there from Cuiabá.</p>
+        <div class="blog-card-meta">By Flávio Tupinambá &nbsp;·&nbsp; 6 min read</div>
+      </div>
+      <span class="blog-card-arrow">→</span>
+    </a>
+
+    <a href="/blog/lencois-maranhenses-travel-guide.html" class="blog-card">
+      <div class="blog-card-content">
+        <span class="blog-card-tag">Lençóis Maranhenses</span>
+        <h2>Lençóis Maranhenses Travel Guide — Dunes, Lagoons, Best Time to Visit</h2>
+        <p>When to visit (June–September for full lagoons), how to get to Barreirinhas, where to stay on the Rio Preguiças, and what to do.</p>
+        <div class="blog-card-meta">By Flávio Tupinambá &nbsp;·&nbsp; 6 min read</div>
+      </div>
+      <span class="blog-card-arrow">→</span>
+    </a>
+
+  </div>
+
+  <div class="lang-note">
+    ¿Prefiere leer en español? <a href="/es/blog.html">Ver guías en español →</a>
+  </div>
+
+</div>
+
+<footer>
+  <a href="/" class="footer-back">← Back to home</a>
+  <p class="footer-copy">© 2025 Tupi Tour · Rio de Janeiro, Brazil</p>
+</footer>
+
+</body>
+</html>
