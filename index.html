@@ -4076,6 +4076,40 @@ function closeGetInTouch(){document.getElementById('getInTouchModal').style.disp
 document.getElementById('getInTouchModal').addEventListener('click',function(e){if(e.target===this)closeGetInTouch();});
 </script>
 
+<script>
+(function() {
+  var TOUR_SLUGS = {
+    "city-tour-rio":     "City Tour Rio",
+    "tijuca-forest":     "Tijuca Forest",
+    "favela-tour":       "Favela Tour — Rocinha",
+    "sunrise-tour":      "Sunrise Tour",
+    "airport-arrival":   "Airport Arrival Tour",
+    "airport-departure": "Airport Departure Tour",
+    "food-tour":         "Food Tour Rio",
+    "coast-to-coast":    "Coast to Coast",
+    "paragliding":       "Paragliding",
+    "petropolis":        "Petrópolis",
+    "personalize":       "Personalize Your Tour in Rio"
+  };
+  function openFromURL() {
+    var params = new URLSearchParams(window.location.search);
+    var slug = params.get("tour");
+    if (!slug) return;
+    var tourName = TOUR_SLUGS[slug];
+    if (!tourName) return;
+    var toursSection = document.getElementById("tours");
+    if (toursSection) toursSection.scrollIntoView({ behavior: "smooth" });
+    setTimeout(function() {
+      if (typeof openTour === "function") openTour(tourName);
+    }, 400);
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", openFromURL);
+  } else {
+    openFromURL();
+  }
+})();
+</script>
 </body>
 </html>
 
