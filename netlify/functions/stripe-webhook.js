@@ -3,9 +3,7 @@
 // Envia recibo HTML ao cliente (via Resend) + notificação ao Flávio
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const ADMIN_EMAIL = 'flavio@tupitour.com';
 const FROM_EMAIL  = 'noreply@tupitour.com'; // domínio verificado no Resend
@@ -296,15 +294,31 @@ exports.handler = async (event) => {
     console.error('Line items error:', err.message);
   }
 
-  // Resend's SDK returns { data, error } and does not throw on a rejected send, so check .error.
-  // Order matters for retries: the customer receipt goes first. If it fails we answer 500 BEFORE
-  // sending the admin notice, so Stripe's retry cannot duplicate any email that already went out.
-  // If only the admin notice fails we answer 200 (a retry would resend the receipt) and report it.
-  async function send(payload) {
+  // Sending goes straight to Resend's HTTP API so each email carries an Idempotency-Key
+  // (the installed SDK, resend 3.x, has no field for it). Same key within 24 h: Resend answers
+  // the same result and does not send again. Keys: one per email kind and checkout session.
+  // Any failure answers 500 so Stripe retries; inside the 24 h window a retry cannot resend an
+  // email that already went out. Limits: live-mode Stripe retries run up to 3 days, so a retry
+  // after 24 h can repeat an email; a request whose answer was lost is only protected if Resend
+  // had stored the key; this does not prove delivery to the inbox.
+  async function send(kind, payload) {
     try {
-      const r = await resend.emails.send(payload);
-      if (r && r.error) return { ok: false, why: r.error.message || r.error.name || 'send_rejected' };
-      return { ok: true, id: r && r.data && r.data.id };
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + process.env.RESEND_API_KEY,
+          'Content-Type': 'application/json',
+          'Idempotency-Key': kind + '/' + session.id,
+        },
+        body: JSON.stringify({
+          from: payload.from, to: payload.to, reply_to: payload.replyTo,
+          subject: payload.subject, html: payload.html,
+        }),
+      });
+      let data = null;
+      try { data = await res.json(); } catch (e) { data = null; }
+      if (!res.ok) return { ok: false, why: (data && (data.message || data.name)) || ('http_' + res.status) };
+      return { ok: true, id: data && data.id };
     } catch (err) {
       return { ok: false, why: err && err.message ? err.message : 'send_threw' };
     }
@@ -312,7 +326,7 @@ exports.handler = async (event) => {
 
   // 1. Recibo ao cliente
   if (clientEmail) {
-    const r1 = await send({
+    const r1 = await send('receipt', {
       from: `Tupi Tour <${FROM_EMAIL}>`,
       to:   clientEmail,
       replyTo: ADMIN_EMAIL,
@@ -321,12 +335,12 @@ exports.handler = async (event) => {
     });
     if (!r1.ok) {
       console.error('Client receipt not sent:', r1.why);
-      return { statusCode: 500, body: JSON.stringify({ received: true, session_id: session.id, errors: ['client_receipt_failed'], retry: true }) };
+      errors.push('client_receipt_failed');
     }
   }
 
-  // 2. Notificação ao Flávio
-  const r2 = await send({
+  // 2. Notificação ao Flávio (also tried when the receipt failed, so one failure does not hide the order)
+  const r2 = await send('admin', {
     from: `Tupi Tour Bookings <${FROM_EMAIL}>`,
     to:   ADMIN_EMAIL,
     replyTo: clientEmail || ADMIN_EMAIL,
@@ -336,6 +350,10 @@ exports.handler = async (event) => {
   if (!r2.ok) {
     console.error('Admin notification not sent:', r2.why);
     errors.push('admin_notification_failed');
+  }
+
+  if (errors.length) {
+    return { statusCode: 500, body: JSON.stringify({ received: true, session_id: session.id, errors: errors, retry: true }) };
   }
 
   return {
