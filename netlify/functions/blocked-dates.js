@@ -27,10 +27,10 @@ exports.handler = async function(event) {
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
-  // GET — public, no auth needed
+  // GET: public returns dates only (no notes, so no guest names); full rows only with a valid admin key
   if (event.httpMethod === 'GET') {
     const data = await supabase('GET', 'blocked_dates?select=date,note,source&order=date.asc');
-    return { statusCode: 200, headers, body: JSON.stringify(data) };
+    return { statusCode: 200, headers, body: JSON.stringify(((event.headers['x-admin-key'] && event.headers['x-admin-key'] === process.env.ADMIN_SECRET) || !Array.isArray(data)) ? data : data.map(function(r) { return { date: r.date, source: r.source }; })) };
   }
 
   // POST and DELETE require admin key
