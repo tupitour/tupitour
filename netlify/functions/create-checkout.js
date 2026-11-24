@@ -178,7 +178,7 @@ exports.handler = async function(event) {
     const taken = blockedSet && i.date && i.date !== 'Flexible dates (TBC)'
       ? i.date.split(',').map(function(s) { return s.trim(); }).filter(function(d) { return blockedSet.has(d); })
       : [];
-    itemMeta['item_' + (idx + 1)] = metaText(JSON.stringify({ n: i.name, d: i.date || '', t: i.time || '', g: i.group || '', p: i.paymentType || '', u: i.price, l: i.priceLabel || '', pd: taken }));
+    itemMeta['item_' + (idx + 1)] = metaText(JSON.stringify({ n: i.name, d: i.date || '', t: i.time || '', g: i.group || '', p: i.paymentType || '', u: i.price, l: i.priceLabel || '', pd: taken, lp: (TOUR_PRICES[i.name] || 0) * (MULTI_DAY_TOURS[i.name] || 1) }));
   });
 
   try {
