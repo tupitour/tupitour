@@ -85,6 +85,12 @@ async function blockDateInSupabase(date, tourName, guestName) {
   }
 }
 
+// Stripe metadata values are limited to 500 characters.
+function metaText(v) {
+  v = String(v == null ? '' : v);
+  return v.length > 500 ? v.slice(0, 497) + '...' : v;
+}
+
 // USD to BRL rate fetched on the server (same source the site uses).
 // Falls back to the same conservative 6.0 the site uses if the lookup fails.
 async function getServerRate() {
@@ -163,7 +169,12 @@ exports.handler = async function(event) {
         guest_email: guestEmail || '',
         tours: items.map(function(i) { return i.name; }).join(', '),
         dates: items.map(function(i) { return i.date || ''; }).join(' | '),
-        usd_rate: String(rate)
+        usd_rate: String(rate),
+        // Keys the confirmation emails read (stripe-webhook.js).
+        tour_name: metaText(items.map(function(i) { return i.name; }).join(', ')),
+        tour_date: metaText(items.map(function(i) { return i.date || ''; }).join(' | ')),
+        group_size: metaText(items.map(function(i) { return i.group || ''; }).join(' | ')),
+        payment_type: metaText(items.map(function(i) { return i.paymentType || ''; }).join(', '))
       },
       success_url: returnBase + '?payment=success&session_id={CHECKOUT_SESSION_ID}',
       cancel_url: returnBase + '?payment=cancelled',
