@@ -28,6 +28,25 @@ function readItems(session) {
 // One block per tour: what was chosen, what Stripe charged for that line.
 // The balance amount is not shown: the site states it is due on the day and
 // the order does not store a balance figure.
+function usd(n) { return 'USD ' + (Number(n) || 0).toFixed(2); }
+
+// Order figures in USD from the stored items: total = tour price for deposits, discounted price for full payments.
+function orderFigures(items) {
+  let total = 0, paid = 0;
+  items.forEach(function(it) {
+    const u = Number(it.u) || 0, lp = Number(it.lp) || 0;
+    paid += u;
+    total += it.p === 'deposit' && lp ? lp : u;
+  });
+  return { total: total, paid: paid, remaining: Math.max(0, total - paid) };
+}
+
+function totalsRows(items, session, extra) {
+  const f = orderFigures(items);
+  const row = function(l, v, strong) { return '<tr style="border-top:1px solid #E5E3DE;"><td style="padding:12px 16px;font-size:13px;color:#555555;">' + l + '</td><td style="padding:12px 16px;font-size:' + (strong ? '15px;font-weight:700;color:#1B7A3E' : '14px;color:#111111') + ';">' + v + '</td></tr>'; };
+  return row('Order total', usd(f.total)) + row('Paid', usd(f.paid)) + (f.remaining > 0 ? row('Remaining, due on the day of the tour', usd(f.remaining), true) : row('Status', 'Paid in full', true)) + (extra || '');
+}
+
 function buildItemRows(items, lines, currency) {
   return items.map(function(it, idx) {
     const line = lines && lines[idx];
@@ -40,11 +59,12 @@ function buildItemRows(items, lines, currency) {
       it.pd && it.pd.length ? ['Partner guide', 'Tupi Tour may assign a partner guide for ' + esc(it.pd.join(', ')) + '. We will confirm who will lead your tour.'] : null,
       it.t ? ['Time', it.t] : null,
       it.g ? ['Group size', it.g] : null,
-      it.lp ? ['Tour price', 'USD ' + esc(it.lp)] : null,
-      it.p === 'full'
-        ? [it.lp ? 'Applied to tour price (full payment)' : 'Amount paid', 'USD ' + esc(it.u) + (it.lp ? ' (10% discount applied)' : '')]
-        : (it.p === 'deposit' ? ['Deposit applied toward tour price', 'USD ' + esc(it.u)] : ['Amount', 'USD ' + esc(it.u)]),
-      it.p === 'deposit' ? ['Balance', 'Due on the day of the tour'] : null,
+      it.lp ? ['Tour price', usd(it.lp)] : null,
+      it.p === 'full' && it.lp && Number(it.lp) > Number(it.u) ? ['Full-payment discount (10%)', '\u2212' + usd(Number(it.lp) - Number(it.u))] : null,
+      it.p === 'full' ? [it.lp ? 'Paid in full' : 'Amount paid', usd(it.u)] : null,
+      it.p === 'deposit' ? ['Deposit paid', usd(it.u)] : null,
+      it.p === 'deposit' && it.lp ? ['Remaining, due on the day of the tour', usd(Number(it.lp) - Number(it.u))] : null,
+      it.p !== 'full' && it.p !== 'deposit' ? ['Amount', usd(it.u)] : null,
       status ? ['Status', status] : null
     ].filter(Boolean);
     return '<tr style="border-top:1px solid #E5E3DE;background:#F8F7F4;"><td colspan="2" style="padding:12px 16px;font-size:14px;color:#111111;font-weight:600;">' + esc(it.n) + '</td></tr>' +
@@ -157,13 +177,14 @@ function buildClientReceiptHtml(session, lines) {
                   <td style="padding:12px 16px;font-size:13px;color:#111111;">${payType}</td>
                 </tr>
 `}
-                <tr style="border-top:1px solid #E5E3DE;background:#FAFAF8;">
+${items.length && String(session.currency).toLowerCase() === 'usd' ? totalsRows(items, session) : `                <tr style="border-top:1px solid #E5E3DE;background:#FAFAF8;">
                   <td style="padding:12px 16px;font-size:13px;color:#555555;">${items.length ? 'Total paid' : 'Amount paid'}</td>
                   <td style="padding:12px 16px;font-size:15px;font-weight:700;color:#1B7A3E;">
                     ${currency} ${amount}
                     ${items.length ? '<div style="font-size:11px;font-weight:400;color:#777777;margin-top:4px;">Cart price: USD ' + items.reduce(function(s, x) { return s + (Number(x.u) || 0); }, 0) + (pres ? '. Total includes the currency conversion applied by Stripe at checkout.' : '') + '</div>' : ''}
                   </td>
                 </tr>
+`}
                 <tr style="border-top:1px solid #E5E3DE;">
                   <td style="padding:12px 16px;font-size:11px;color:#AAAAAA;">Reference</td>
                   <td style="padding:12px 16px;font-size:11px;color:#AAAAAA;word-break:break-all;">${sessionId}</td>
@@ -217,7 +238,7 @@ function buildClientReceiptHtml(session, lines) {
 }
 
 // ── Email de notificação para o Flávio ─────────────────────────────────────
-function buildAdminNotificationHtml(session, lines) {
+function buildAdminNotificationHtml(session, lines, bt) {
   const items = readItems(session);
   const pres = session.presentment_details && typeof session.presentment_details.presentment_amount === 'number' ? session.presentment_details : null;
   const clientName  = session.customer_details?.name  || 'Unknown';
@@ -240,7 +261,8 @@ function buildAdminNotificationHtml(session, lines) {
       <tr><td style="color:#888;width:35%;">Client</td><td><strong>${clientName}</strong></td></tr>
       <tr><td style="color:#888;">Email</td><td><a href="mailto:${clientEmail}">${clientEmail}</a></td></tr>
 ${items.length ? `      <tr><td colspan="2" style="padding:0;"><table cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #E5E3DE;">${buildItemRows(items, lines, currency)}</table></td></tr>
-      <tr><td style="color:#888;">Total paid</td><td><strong style="color:#1B7A3E;">${pres ? pres.presentment_currency.toUpperCase() + ' ' + (pres.presentment_amount / 100).toFixed(2) : currency + ' ' + amount}</strong>${pres ? '<div style="font-size:11px;color:#777;">Settled by Stripe: ' + currency + ' ' + amount + '. Cart price: USD ' + items.reduce(function(t, x) { return t + (Number(x.u) || 0); }, 0) + '.</div>' : ''}</td></tr>
+${String(session.currency).toLowerCase() === 'usd' ? '<tr><td colspan="2" style="padding:0;"><table cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #E5E3DE;">' + totalsRows(items, session, bt && typeof bt.amount === 'number' ? '<tr style="border-top:1px solid #E5E3DE;"><td style="padding:12px 16px;font-size:13px;color:#555555;">Settled in BRL</td><td style="padding:12px 16px;font-size:14px;color:#111111;">R$ ' + (bt.amount / 100).toFixed(2) + (bt.exchange_rate ? '<div style="font-size:11px;color:#777777;">USD 1 = R$ ' + Number(bt.exchange_rate).toFixed(4) + ' on the day of payment, before Stripe fees</div>' : '') + '</td></tr>' : '<tr style="border-top:1px solid #E5E3DE;"><td style="padding:12px 16px;font-size:13px;color:#555555;">Settled in BRL</td><td style="padding:12px 16px;font-size:13px;color:#777777;">Not available yet</td></tr>') + '</table></td></tr>' : `      <tr><td style="color:#888;">Total paid</td><td><strong style="color:#1B7A3E;">${pres ? pres.presentment_currency.toUpperCase() + ' ' + (pres.presentment_amount / 100).toFixed(2) : currency + ' ' + amount}</strong>${pres ? '<div style="font-size:11px;color:#777;">Settled by Stripe: ' + currency + ' ' + amount + '. Cart price: USD ' + items.reduce(function(t, x) { return t + (Number(x.u) || 0); }, 0) + '.</div>' : ''}</td></tr>
+`}
 ` : `      <tr><td style="color:#888;">Tour</td><td>${tourName}</td></tr>
       <tr><td style="color:#888;">Date</td><td>${tourDate}</td></tr>
       <tr><td style="color:#888;">Group size</td><td>${groupSize}</td></tr>
@@ -284,6 +306,16 @@ exports.handler = async (event) => {
   const tourName    = session.metadata?.tour_name || session.metadata?.tours || 'Tupi Tour Experience';
 
   const errors = [];
+
+  // What Stripe settled in BRL for this payment (read only): amount and the rate of the day of payment.
+  let bt = null;
+  try {
+    if (session.payment_intent) {
+      const pi = await stripe.paymentIntents.retrieve(session.payment_intent, { expand: ['latest_charge.balance_transaction'] });
+      const t = pi && pi.latest_charge && pi.latest_charge.balance_transaction;
+      if (t && typeof t === 'object' && String(t.currency).toLowerCase() === 'brl') bt = { amount: t.amount, exchange_rate: t.exchange_rate };
+    }
+  } catch (err) { console.error('Balance transaction lookup error:', err.message); }
 
   // Stripe's own per-line amounts (same order as the cart items).
   let lines = [];
@@ -360,7 +392,7 @@ exports.handler = async (event) => {
     to:   ADMIN_EMAIL,
     replyTo: clientEmail || ADMIN_EMAIL,
     subject: `🎉 New booking: ${tourName} — ${clientName}`,
-    html: buildAdminNotificationHtml(session, lines),
+    html: buildAdminNotificationHtml(session, lines, bt),
   });
   if (!r2.ok) {
     console.error('Admin notification not sent:', r2.why);
@@ -381,3 +413,4 @@ exports.handler = async (event) => {
     }),
   };
 };
+
