@@ -394,17 +394,24 @@ exports.handler = async (event) => {
       console.log('Test mode: ' + kind + ' email not sent (recipient not in TEST_ONLY_RECIPIENT)');
       return { ok: true, skipped: true };
     }
+    // Sandbox events use ONLY RESEND_API_KEY_TEST (never the production key). Missing = nothing sent.
+    const apiKey = testMode ? process.env.RESEND_API_KEY_TEST : process.env.RESEND_API_KEY;
+    if (testMode && !apiKey) {
+      skipped.push(kind);
+      console.log('Test mode: ' + kind + ' email not sent (RESEND_API_KEY_TEST not set)');
+      return { ok: true, skipped: true };
+    }
     try {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + process.env.RESEND_API_KEY,
+          'Authorization': 'Bearer ' + apiKey,
           'Content-Type': 'application/json',
           'Idempotency-Key': kind + '/' + session.id,
         },
         body: JSON.stringify({
           from: payload.from, to: payload.to, reply_to: payload.replyTo,
-          subject: payload.subject, html: payload.html,
+          subject: (testMode ? '[TESTE] ' : '') + payload.subject, html: payload.html,
         }),
       });
       let data = null;
