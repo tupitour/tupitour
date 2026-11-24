@@ -3,7 +3,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
 // Server-side price check. Same rule as the site (index.html and es/index.html):
-// fixed USD price per tour; a calendar booking is a deposit (USD 30 x days)
+// fixed USD price per tour; a booking is a deposit (USD 30 x days)
 // or the full amount with 10% off (price x days x 0.9, rounded).
 // Keep this table in sync with the `tours` object in index.html.
 const TOUR_PRICES = {
@@ -27,11 +27,14 @@ const MULTI_DAY_TOURS = {
   'City Tour Rio \u2014 5 days': 5
 };
 
+// Every booking in the site goes through the calendar, so an item is always
+// either the deposit (USD 30 x days) or the full amount (price x days x 0.9).
+// The undiscounted base price is not offered by any path and is rejected.
 function allowedPrices(name) {
   const base = TOUR_PRICES[name];
   if (typeof base !== 'number') return null;
   const days = MULTI_DAY_TOURS[name] || 1;
-  return [base, 30 * days, Math.round(base * days * 0.9)];
+  return { deposit: 30 * days, full: Math.round(base * days * 0.9) };
 }
 
 function validateItems(items) {
@@ -39,7 +42,17 @@ function validateItems(items) {
     if (!item || typeof item.name !== 'string') return 'Invalid item';
     const allowed = allowedPrices(item.name);
     if (!allowed) return 'Unknown tour';
-    if (typeof item.price !== 'number' || allowed.indexOf(item.price) === -1) return 'Invalid price';
+    if (typeof item.price !== 'number' || !isFinite(item.price)) return 'Invalid price';
+    if (item.paymentType === 'deposit') {
+      if (item.price !== allowed.deposit) return 'Invalid price';
+    } else if (item.paymentType === 'full') {
+      if (item.price !== allowed.full) return 'Invalid price';
+    } else if (item.paymentType === undefined || item.paymentType === '') {
+      // Older cached pages do not send paymentType: accept either offered amount.
+      if (item.price !== allowed.deposit && item.price !== allowed.full) return 'Invalid price';
+    } else {
+      return 'Invalid price';
+    }
   }
   return null;
 }
