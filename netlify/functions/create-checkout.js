@@ -22,6 +22,19 @@ const TOUR_PRICES = {
   'Rafting': 250,
   'Petr\u00f3polis': 380
 };
+// Per-group price list of the site's tour panel (1 to 4 people). The deposit stays USD 30 x days;
+// the full payment keeps the 10% discount on the price of the chosen group size.
+const GROUP_PRICES = {
+  'Pantanal Carioca': { 1: 150, 2: 180, 3: 190, 4: 200 },
+  'Rafting': { 1: 250, 2: 270, 3: 410, 4: 430 }
+};
+// Tour price for the group size of an item (null when the tour has a per-group list and the size is not 1 to 4).
+function basePriceFor(name, group) {
+  const list = GROUP_PRICES[name];
+  if (!list) return TOUR_PRICES[name];
+  const n = /^[1-4]$/.test(String(group)) ? Number(group) : 0;
+  return n ? list[n] : null;
+}
 const MULTI_DAY_TOURS = {
   'City Tour Rio \u2014 3 days': 3,
   'City Tour Rio \u2014 5 days': 5
@@ -30,8 +43,8 @@ const MULTI_DAY_TOURS = {
 // Every booking in the site goes through the calendar, so an item is always
 // either the deposit (USD 30 x days) or the full amount (price x days x 0.9).
 // The undiscounted base price is not offered by any path and is rejected.
-function allowedPrices(name) {
-  const base = TOUR_PRICES[name];
+function allowedPrices(name, group) {
+  const base = basePriceFor(name, group);
   if (typeof base !== 'number') return null;
   const days = MULTI_DAY_TOURS[name] || 1;
   return { deposit: 30 * days, full: Math.round(base * days * 0.9) };
@@ -40,8 +53,9 @@ function allowedPrices(name) {
 function validateItems(items) {
   for (const item of items) {
     if (!item || typeof item.name !== 'string') return 'Invalid item';
-    const allowed = allowedPrices(item.name);
-    if (!allowed) return 'Unknown tour';
+    if (typeof TOUR_PRICES[item.name] !== 'number') return 'Unknown tour';
+    const allowed = allowedPrices(item.name, item.group);
+    if (!allowed) return 'Invalid group size';
     if (typeof item.price !== 'number' || !isFinite(item.price)) return 'Invalid price';
     if (item.paymentType === 'deposit') {
       if (item.price !== allowed.deposit) return 'Invalid price';
@@ -144,6 +158,14 @@ exports.handler = async function(event) {
     // item.price is always in USD (as stored in the cart). The checkout is charged in USD exactly
     // as advertised on the site (no BRL step, so no double conversion). Stripe settles to the BRL balance.
     const usdCents = Math.round(item.price * 100);
+    // Checkout text in the site language (Spanish texts are a draft for the owner's review).
+    const es = lang === 'es';
+    const people = String(item.group) === '1' ? (es ? 'persona' : 'person') : (es ? 'personas' : 'people');
+    const payLabel = item.paymentType === 'deposit'
+      ? (es ? 'Reserva \u2014 anticipo de USD ' + item.price + ' (saldo el d\u00eda del tour)' : 'Reserve \u2014 USD ' + item.price + ' deposit (balance due on the day)')
+      : (item.paymentType === 'full'
+        ? (es ? 'Pago completo \u2014 USD ' + item.price + ' (10 % de descuento aplicado)' : 'Pay in full \u2014 USD ' + item.price + ' (10% discount applied)')
+        : (item.priceLabel || null));
 
     return {
       price_data: {
@@ -153,9 +175,8 @@ exports.handler = async function(event) {
           description: [
             item.date ? '📅 ' + item.date : null,
             item.time ? '🕐 ' + item.time : null,
-            item.group ? '👥 ' + item.group + ' people' : null,
-            item.priceLabel || null,
-            'USD ' + item.price
+            item.group ? '👥 ' + item.group + ' ' + people : null,
+            payLabel
           ].filter(Boolean).join('  ·  ')
         },
         unit_amount: usdCents
@@ -180,7 +201,7 @@ exports.handler = async function(event) {
     const taken = blockedSet && i.date && i.date !== 'Flexible dates (TBC)'
       ? i.date.split(',').map(function(s) { return s.trim(); }).filter(function(d) { return blockedSet.has(d); })
       : [];
-    itemMeta['item_' + (idx + 1)] = metaText(JSON.stringify({ n: i.name, d: i.date || '', t: i.time || '', g: i.group || '', p: i.paymentType || '', u: i.price, l: i.priceLabel || '', pd: taken, lp: (TOUR_PRICES[i.name] || 0) * (MULTI_DAY_TOURS[i.name] || 1) }));
+    itemMeta['item_' + (idx + 1)] = metaText(JSON.stringify({ n: i.name, d: i.date || '', t: i.time || '', g: i.group || '', p: i.paymentType || '', u: i.price, l: i.priceLabel || '', pd: taken, lp: (basePriceFor(i.name, i.group) || 0) * (MULTI_DAY_TOURS[i.name] || 1) }));
   });
 
   try {
@@ -231,4 +252,4 @@ exports.handler = async function(event) {
   }
 };
 
-exports._test = { validateItems, allowedPrices };
+exports._test = { validateItems, allowedPrices, basePriceFor };
