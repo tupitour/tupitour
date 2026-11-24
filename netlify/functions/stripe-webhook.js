@@ -219,7 +219,9 @@ function buildClientReceiptHtml(session, lines) {
 }
 
 // ── Email de notificação para o Flávio ─────────────────────────────────────
-function buildAdminNotificationHtml(session) {
+function buildAdminNotificationHtml(session, lines) {
+  const items = readItems(session);
+  const pres = session.presentment_details && typeof session.presentment_details.presentment_amount === 'number' ? session.presentment_details : null;
   const clientName  = session.customer_details?.name  || 'Unknown';
   const clientEmail = session.customer_details?.email || 'Unknown';
   const amount      = ((session.amount_total || 0) / 100).toFixed(2);
@@ -239,12 +241,14 @@ function buildAdminNotificationHtml(session) {
     <table cellpadding="6" cellspacing="0" style="width:100%;font-size:14px;color:#333;">
       <tr><td style="color:#888;width:35%;">Client</td><td><strong>${clientName}</strong></td></tr>
       <tr><td style="color:#888;">Email</td><td><a href="mailto:${clientEmail}">${clientEmail}</a></td></tr>
-      <tr><td style="color:#888;">Tour</td><td>${tourName}</td></tr>
+${items.length ? `      <tr><td colspan="2" style="padding:0;"><table cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #E5E3DE;">${buildItemRows(items, lines, currency)}</table></td></tr>
+      <tr><td style="color:#888;">Total paid</td><td><strong style="color:#1B7A3E;">${pres ? pres.presentment_currency.toUpperCase() + ' ' + (pres.presentment_amount / 100).toFixed(2) : currency + ' ' + amount}</strong>${pres ? '<div style="font-size:11px;color:#777;">Settled by Stripe: ' + currency + ' ' + amount + '. Cart price: USD ' + items.reduce(function(t, x) { return t + (Number(x.u) || 0); }, 0) + '.</div>' : ''}</td></tr>
+` : `      <tr><td style="color:#888;">Tour</td><td>${tourName}</td></tr>
       <tr><td style="color:#888;">Date</td><td>${tourDate}</td></tr>
       <tr><td style="color:#888;">Group size</td><td>${groupSize}</td></tr>
       <tr><td style="color:#888;">Payment</td><td>${payType}</td></tr>
       <tr><td style="color:#888;">Amount</td><td><strong style="color:#1B7A3E;">${currency} ${amount}</strong></td></tr>
-      <tr><td style="color:#888;font-size:11px;">Stripe session</td><td style="font-size:11px;word-break:break-all;">${sessionId}</td></tr>
+`}      <tr><td style="color:#888;font-size:11px;">Stripe session</td><td style="font-size:11px;word-break:break-all;">${sessionId}</td></tr>
     </table>
     <p style="margin-top:16px;font-size:13px;color:#555;">
       Reply directly to this email to contact the client.
@@ -292,33 +296,45 @@ exports.handler = async (event) => {
     console.error('Line items error:', err.message);
   }
 
+  // Resend's SDK returns { data, error } and does not throw on a rejected send, so check .error.
+  // Order matters for retries: the customer receipt goes first. If it fails we answer 500 BEFORE
+  // sending the admin notice, so Stripe's retry cannot duplicate any email that already went out.
+  // If only the admin notice fails we answer 200 (a retry would resend the receipt) and report it.
+  async function send(payload) {
+    try {
+      const r = await resend.emails.send(payload);
+      if (r && r.error) return { ok: false, why: r.error.message || r.error.name || 'send_rejected' };
+      return { ok: true, id: r && r.data && r.data.id };
+    } catch (err) {
+      return { ok: false, why: err && err.message ? err.message : 'send_threw' };
+    }
+  }
+
   // 1. Recibo ao cliente
   if (clientEmail) {
-    try {
-      await resend.emails.send({
-        from: `Tupi Tour <${FROM_EMAIL}>`,
-        to:   clientEmail,
-        replyTo: ADMIN_EMAIL,
-        subject: `Booking Confirmed — ${tourName}`,
-        html: buildClientReceiptHtml(session, lines),
-      });
-    } catch (err) {
-      console.error('Resend client receipt error:', err);
-      errors.push('client_receipt_failed');
+    const r1 = await send({
+      from: `Tupi Tour <${FROM_EMAIL}>`,
+      to:   clientEmail,
+      replyTo: ADMIN_EMAIL,
+      subject: `Booking Confirmed — ${tourName}`,
+      html: buildClientReceiptHtml(session, lines),
+    });
+    if (!r1.ok) {
+      console.error('Client receipt not sent:', r1.why);
+      return { statusCode: 500, body: JSON.stringify({ received: true, session_id: session.id, errors: ['client_receipt_failed'], retry: true }) };
     }
   }
 
   // 2. Notificação ao Flávio
-  try {
-    await resend.emails.send({
-      from: `Tupi Tour Bookings <${FROM_EMAIL}>`,
-      to:   ADMIN_EMAIL,
-      replyTo: clientEmail || ADMIN_EMAIL,
-      subject: `🎉 New booking: ${tourName} — ${clientName}`,
-      html: buildAdminNotificationHtml(session),
-    });
-  } catch (err) {
-    console.error('Resend admin notification error:', err);
+  const r2 = await send({
+    from: `Tupi Tour Bookings <${FROM_EMAIL}>`,
+    to:   ADMIN_EMAIL,
+    replyTo: clientEmail || ADMIN_EMAIL,
+    subject: `🎉 New booking: ${tourName} — ${clientName}`,
+    html: buildAdminNotificationHtml(session, lines),
+  });
+  if (!r2.ok) {
+    console.error('Admin notification not sent:', r2.why);
     errors.push('admin_notification_failed');
   }
 
