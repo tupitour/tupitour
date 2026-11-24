@@ -69,7 +69,7 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
-  const { items, guestName, guestEmail, successUrl, cancelUrl } = body;
+  const { items, guestName, guestEmail, lang } = body;
 
   if (!items || !Array.isArray(items) || items.length === 0) {
     return { statusCode: 400, body: JSON.stringify({ error: 'No items in cart' }) };
@@ -82,6 +82,10 @@ exports.handler = async function(event) {
 
   // The rate is fetched on the server. brlRate from the browser is ignored.
   const rate = await getServerRate();
+
+  // Return URLs are built on the server (the browser can no longer choose them).
+  // The Spanish site returns to /es/, everything else to the home page.
+  const returnBase = 'https://tupitour.com' + (lang === 'es' ? '/es/' : '/');
 
   const lineItems = items.map(function(item) {
     // item.price is always in USD (as stored in the cart).
@@ -120,8 +124,8 @@ exports.handler = async function(event) {
         dates: items.map(function(i) { return i.date || ''; }).join(' | '),
         usd_rate: String(rate)
       },
-      success_url: successUrl || 'https://www.tupitour.com/?payment=success',
-      cancel_url: cancelUrl || 'https://www.tupitour.com/?payment=cancelled',
+      success_url: returnBase + '?payment=success&session_id={CHECKOUT_SESSION_ID}',
+      cancel_url: returnBase + '?payment=cancelled',
     });
 
     for (const item of items) {
