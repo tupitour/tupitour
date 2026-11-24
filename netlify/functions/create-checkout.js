@@ -136,7 +136,11 @@ exports.handler = async function(event) {
 
   // Return URLs are built on the server (the browser can no longer choose them).
   // The Spanish site returns to /es/, everything else to the home page.
-  const returnBase = 'https://tupitour.com' + (lang === 'es' ? '/es/' : '/');
+  // Netlify deploy previews of this site return to the preview itself so a test payment can be checked end to end.
+  // Any other host (production, custom domain, direct calls) returns to production.
+  const reqHost = String((event.headers && (event.headers['x-forwarded-host'] || event.headers.host)) || '').toLowerCase();
+  const siteBase = /^deploy-preview-\d+--tupitour\.netlify\.app$/.test(reqHost) ? 'https://' + reqHost : 'https://tupitour.com';
+  const returnBase = siteBase + (lang === 'es' ? '/es/' : '/');
 
   const lineItems = items.map(function(item) {
     // item.price is always in USD (as stored in the cart).
