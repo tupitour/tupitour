@@ -36,15 +36,17 @@ function buildItemRows(items, lines, currency) {
     const charged = line && typeof line.amount_total === 'number'
       ? currency + ' ' + (line.amount_total / 100).toFixed(2)
       : 'not available';
-    const status = it.p === 'full'
-      ? 'Paid in full'
-      : (it.p === 'deposit' ? 'Deposit paid. Balance due on the day of the tour.' : '');
+    const status = '';
     const rows = [
       ['Date', it.d || 'To be confirmed'],
       it.pd && it.pd.length ? ['Partner guide', 'Tupi Tour may assign a partner guide for ' + esc(it.pd.join(', ')) + '. We will confirm who will lead your tour.'] : null,
       it.t ? ['Time', it.t] : null,
       it.g ? ['Group size', it.g] : null,
-      ['Price in cart', 'USD ' + esc(it.u)],
+      it.lp ? ['Tour price', 'USD ' + esc(it.lp)] : null,
+      it.p === 'full'
+        ? [it.lp ? 'Paid in full' : 'Amount paid', 'USD ' + esc(it.u) + (it.lp ? ' (10% discount applied)' : '')]
+        : (it.p === 'deposit' ? ['Deposit paid', 'USD ' + esc(it.u)] : ['Amount', 'USD ' + esc(it.u)]),
+      it.p === 'deposit' ? ['Balance', 'Due on the day of the tour'] : null,
       status ? ['Status', status] : null
     ].filter(Boolean);
     return '<tr style="border-top:1px solid #E5E3DE;background:#F8F7F4;"><td colspan="2" style="padding:12px 16px;font-size:14px;color:#111111;font-weight:600;">' + esc(it.n) + '</td></tr>' +
