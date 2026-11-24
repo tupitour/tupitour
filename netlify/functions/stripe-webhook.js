@@ -11,7 +11,51 @@ const ADMIN_EMAIL = 'flavio@tupitour.com';
 const FROM_EMAIL  = 'noreply@tupitour.com'; // domínio verificado no Resend
 
 // ── HTML do recibo enviado ao cliente ──────────────────────────────────────
-function buildClientReceiptHtml(session) {
+function esc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Items saved by create-checkout.js at checkout time (item_1 .. item_N).
+function readItems(session) {
+  const md = session.metadata || {};
+  const n = parseInt(md.item_count, 10);
+  if (!n) return [];
+  const items = [];
+  for (let i = 1; i <= n; i++) {
+    try { items.push(JSON.parse(md['item_' + i])); } catch (e) { return []; }
+  }
+  return items;
+}
+
+// One block per tour: what was chosen, what Stripe charged for that line.
+// The balance amount is not shown: the site states it is due on the day and
+// the order does not store a balance figure.
+function buildItemRows(items, lines, currency) {
+  return items.map(function(it, idx) {
+    const line = lines && lines[idx];
+    const charged = line && typeof line.amount_total === 'number'
+      ? currency + ' ' + (line.amount_total / 100).toFixed(2)
+      : 'not available';
+    const status = it.p === 'full'
+      ? 'Paid in full'
+      : (it.p === 'deposit' ? 'Deposit paid. Balance due on the day of the tour.' : '');
+    const rows = [
+      ['Date', it.d || 'To be confirmed'],
+      it.t ? ['Time', it.t] : null,
+      it.g ? ['Group size', it.g] : null,
+      ['Price in cart', 'USD ' + esc(it.u)],
+      ['Charged', charged],
+      status ? ['Status', status] : null
+    ].filter(Boolean);
+    return '<tr style="border-top:1px solid #E5E3DE;background:#F8F7F4;"><td colspan="2" style="padding:12px 16px;font-size:14px;color:#111111;font-weight:600;">' + esc(it.n) + '</td></tr>' +
+      rows.map(function(r) {
+        return '<tr style="border-top:1px solid #E5E3DE;"><td style="padding:8px 16px;font-size:13px;color:#555555;width:40%;">' + r[0] + '</td><td style="padding:8px 16px;font-size:13px;color:#111111;">' + r[1] + '</td></tr>';
+      }).join('');
+  }).join('');
+}
+
+function buildClientReceiptHtml(session, lines) {
+  const items = readItems(session);
   const name     = session.customer_details?.name   || 'Valued Guest';
   const email    = session.customer_details?.email  || '';
   const amount   = ((session.amount_total || 0) / 100).toFixed(2);
@@ -26,6 +70,7 @@ function buildClientReceiptHtml(session) {
       : (payTypes.every(function(t) { return t === 'full'; })
         ? 'Full payment'
         : 'Deposit for some tours, full payment for others'));
+  const groupSize = String(session.metadata?.group_size || 'Not specified');
   const sessionId = session.id;
 
   return `<!DOCTYPE html>
@@ -74,7 +119,7 @@ function buildClientReceiptHtml(session) {
                 Hi <strong>${name}</strong>,
               </p>
               <p style="font-size:15px;color:#555555;margin:12px 0 0;line-height:1.6;">
-                Your booking is confirmed. Flávio will be in touch within 24 hours to finalise details
+                Your booking is confirmed. Tupi Tour will be in touch within 24 hours to finalise details
                 and answer any questions you may have. We can't wait to show you Brazil.
               </p>
             </td>
@@ -92,7 +137,7 @@ function buildClientReceiptHtml(session) {
                     Booking Summary
                   </td>
                 </tr>
-                <tr style="border-top:1px solid #E5E3DE;">
+                ${items.length ? buildItemRows(items, lines, currency) : `                <tr style="border-top:1px solid #E5E3DE;">
                   <td style="padding:12px 16px;font-size:13px;color:#555555;width:40%;">Tour / Experience</td>
                   <td style="padding:12px 16px;font-size:13px;color:#111111;font-weight:500;">${tourName}</td>
                 </tr>
@@ -101,11 +146,16 @@ function buildClientReceiptHtml(session) {
                   <td style="padding:12px 16px;font-size:13px;color:#111111;">${tourDate}</td>
                 </tr>
                 <tr style="border-top:1px solid #E5E3DE;">
+                  <td style="padding:12px 16px;font-size:13px;color:#555555;">Group size</td>
+                  <td style="padding:12px 16px;font-size:13px;color:#111111;">${groupSize}</td>
+                </tr>
+                <tr style="border-top:1px solid #E5E3DE;">
                   <td style="padding:12px 16px;font-size:13px;color:#555555;">Payment type</td>
                   <td style="padding:12px 16px;font-size:13px;color:#111111;">${payType}</td>
                 </tr>
+`}
                 <tr style="border-top:1px solid #E5E3DE;background:#FAFAF8;">
-                  <td style="padding:12px 16px;font-size:13px;color:#555555;">Amount paid</td>
+                  <td style="padding:12px 16px;font-size:13px;color:#555555;">Total paid</td>
                   <td style="padding:12px 16px;font-size:15px;font-weight:700;color:#1B7A3E;">
                     ${currency} ${amount}
                   </td>
@@ -124,8 +174,8 @@ function buildClientReceiptHtml(session) {
               <p style="font-size:13px;font-weight:600;color:#111111;margin:0 0 8px;
                         letter-spacing:0.05em;text-transform:uppercase;">What happens next</p>
               <ul style="margin:0;padding-left:20px;color:#555555;font-size:14px;line-height:1.8;">
-                <li>Flávio will email you within <strong>24 hours</strong> to confirm all details.</li>
-                <li>You can also reach him directly on
+                <li>Tupi Tour will email you within <strong>24 hours</strong> to confirm all details.</li>
+                <li>You can also reach us directly on
                     <a href="https://wa.me/5521988042225" style="color:#1B7A3E;text-decoration:none;">WhatsApp</a>.
                 </li>
                 <li>Please keep this email as your receipt.</li>
@@ -227,6 +277,15 @@ exports.handler = async (event) => {
 
   const errors = [];
 
+  // Stripe's own per-line amounts (same order as the cart items).
+  let lines = [];
+  try {
+    const li = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 });
+    lines = li.data || [];
+  } catch (err) {
+    console.error('Line items error:', err.message);
+  }
+
   // 1. Recibo ao cliente
   if (clientEmail) {
     try {
@@ -235,7 +294,7 @@ exports.handler = async (event) => {
         to:   clientEmail,
         replyTo: ADMIN_EMAIL,
         subject: `Booking Confirmed — ${tourName}`,
-        html: buildClientReceiptHtml(session),
+        html: buildClientReceiptHtml(session, lines),
       });
     } catch (err) {
       console.error('Resend client receipt error:', err);
