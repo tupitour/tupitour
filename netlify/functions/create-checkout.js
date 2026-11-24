@@ -195,6 +195,8 @@ exports.handler = async function(event) {
         item_count: String(items.length),
         guest_name: guestName || '',
         guest_email: guestEmail || '',
+        // Site language of the order (the confirmation email follows it).
+        lang: lang === 'es' ? 'es' : 'en',
         tours: items.map(function(i) { return i.name; }).join(', '),
         dates: items.map(function(i) { return i.date || ''; }).join(' | '),
         // Keys the confirmation emails read (stripe-webhook.js).
