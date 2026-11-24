@@ -3230,7 +3230,7 @@ async function loadAdminList() {
   var el = document.getElementById('adminBlockedList');
   el.innerHTML = '<div class="admin-empty">Loading...</div>';
   try {
-    var res = await fetch('/.netlify/functions/blocked-dates');
+    var res = await fetch('/.netlify/functions/blocked-dates', { headers: { 'x-admin-key': ADMIN_SECRET || '' } });
     var blocked = await res.json();
     saveBlocked(blocked);
     renderAdminList(blocked);
@@ -3255,7 +3255,7 @@ function renderAdminList(blocked) {
     var source = b.source === 'stripe' ? ' <span style="font-size:0.68rem;color:var(--green);font-weight:500;">STRIPE</span>' : '';
     var leftDiv = document.createElement('div');
     leftDiv.innerHTML = '<div class="admin-blocked-date">' + label + source + '</div>' +
-      (b.note ? '<div class="admin-blocked-note">' + b.note + '</div>' : '');
+      (b.note ? '<div class="admin-blocked-note">' + String(b.note).replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }) + '</div>' : '');
     var unbtn = document.createElement('button');
     unbtn.className = 'admin-unblock';
     unbtn.textContent = 'Unblock';
