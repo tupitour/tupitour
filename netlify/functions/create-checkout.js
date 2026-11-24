@@ -163,9 +163,22 @@ exports.handler = async function(event) {
   });
 
   // One metadata key per cart item, saved at checkout time (read by stripe-webhook.js).
+  // Dates that already have a block or hold in blocked_dates. The row's source is not
+  // interpreted (a hold is not treated as a paid booking); the flag only drives the partner-guide notice.
+  let blockedSet = null;
+  try {
+    const r = await fetch(SUPABASE_URL + '/rest/v1/blocked_dates?select=date', {
+      headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY }
+    });
+    if (r.ok) blockedSet = new Set((await r.json()).map(function(x) { return x.date; }));
+  } catch (e) { console.error('Blocked lookup error:', e.message); }
+
   const itemMeta = {};
   items.forEach(function(i, idx) {
-    itemMeta['item_' + (idx + 1)] = metaText(JSON.stringify({ n: i.name, d: i.date || '', t: i.time || '', g: i.group || '', p: i.paymentType || '', u: i.price, l: i.priceLabel || '' }));
+    const taken = blockedSet && i.date && i.date !== 'Flexible dates (TBC)'
+      ? i.date.split(',').map(function(s) { return s.trim(); }).filter(function(d) { return blockedSet.has(d); })
+      : [];
+    itemMeta['item_' + (idx + 1)] = metaText(JSON.stringify({ n: i.name, d: i.date || '', t: i.time || '', g: i.group || '', p: i.paymentType || '', u: i.price, l: i.priceLabel || '', pd: taken }));
   });
 
   try {
