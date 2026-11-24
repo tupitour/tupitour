@@ -301,7 +301,22 @@ exports.handler = async (event) => {
   // email that already went out. Limits: live-mode Stripe retries run up to 3 days, so a retry
   // after 24 h can repeat an email; a request whose answer was lost is only protected if Resend
   // had stored the key; this does not prove delivery to the inbox.
+  // Test-mode guard (fail closed). Stripe's signed event says livemode=false for sandbox events
+  // (CONTEXT is Netlify's own deploy context, also checked). In test mode an email goes out only if
+  // its recipient is EXACTLY one of the addresses in TEST_ONLY_RECIPIENT (comma separated); a
+  // missing or empty list blocks every send. Live events in production are not affected.
+  const testMode = stripeEvent.livemode !== true || process.env.CONTEXT === 'deploy-preview';
+  const allowed = String(process.env.TEST_ONLY_RECIPIENT || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+  const skipped = [];
+  // In test mode the order itself must come from an allowed address, so an old sandbox order
+  // (other customer address) triggers no email at all, not even the admin notice.
+  const orderAllowed = !testMode || (typeof clientEmail === 'string' && clientEmail === clientEmail.trim() && allowed.indexOf(clientEmail.toLowerCase()) !== -1);
   async function send(kind, payload) {
+    if (testMode && !orderAllowed || testMode && !(typeof payload.to === 'string' && allowed.indexOf(payload.to.trim().toLowerCase()) !== -1 && payload.to === payload.to.trim())) {
+      skipped.push(kind);
+      console.log('Test mode: ' + kind + ' email not sent (recipient not in TEST_ONLY_RECIPIENT)');
+      return { ok: true, skipped: true };
+    }
     try {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -353,7 +368,7 @@ exports.handler = async (event) => {
   }
 
   if (errors.length) {
-    return { statusCode: 500, body: JSON.stringify({ received: true, session_id: session.id, errors: errors, retry: true }) };
+    return { statusCode: 500, body: JSON.stringify({ received: true, session_id: session.id, errors: errors, retry: true, skipped: skipped.length ? skipped : undefined }) };
   }
 
   return {
@@ -362,6 +377,7 @@ exports.handler = async (event) => {
       received: true,
       session_id: session.id,
       errors: errors.length ? errors : undefined,
+      skipped: skipped.length ? 'not_allowlisted:' + skipped.join(',') : undefined,
     }),
   };
 };
