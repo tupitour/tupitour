@@ -2161,7 +2161,7 @@ function openAmazonMenu() {
   b += '</div>';
   b += '<div class="panel-highlight-box"><p>&#127757; <strong style="color:#7EC89A">Complejo de Conservación del Amazonas Central UNESCO</strong> &mdash; 6 millones de hectáreas. El único buque de expedición que se adentra tan profundamente en la reserva.</p></div>';
   document.getElementById('panelBody').innerHTML = b;
-  document.getElementById('panelFooter').innerHTML = '<button class="btn-contact-form" id="toggleFormBtn">Háblanos &mdash; planifica tu viaje al Amazonas</button><button class="btn-close-panel" onclick="closePanel()">Cerrar</button><a class="btn-download-pdf" href="TupiTour_Amazon_Tucano_Guide.pdf" download>&#8595; Descargar folleto del Amazonas (PDF)</a>'; var tb=document.getElementById('toggleFormBtn'); if(tb) tb.addEventListener('click', toggleContactForm);
+  document.getElementById('panelFooter').innerHTML = '<button class="btn-contact-form" id="toggleFormBtn">Háblanos &mdash; planifica tu viaje al Amazonas</button><button class="btn-close-panel" onclick="closePanel()">Cerrar</button><a class="btn-download-pdf" href="/TupiTour_Amazon_Tucano_Guide.pdf" download>&#8595; Descargar folleto del Amazonas (PDF)</a>'; var tb=document.getElementById('toggleFormBtn'); if(tb) tb.addEventListener('click', toggleContactForm);
   document.getElementById('tourPanel').classList.add('open');
   document.getElementById('overlay').classList.add('open');
 }
@@ -2186,7 +2186,7 @@ function openAmazonPanel(idx) {
   var c = cruises[idx];
   document.getElementById('panelCat').textContent = c.nights + ' — Máx. ' + c.group.replace('people max','personas');
   document.getElementById('panelTitle').textContent = c.title;
-  var b = makeCarousel('amazonPC',['../imgs/motor-yacht-tucano-sunset-amazon-river-brazil.jpg','../imgs/motor-yacht-tucano-amazon-river-brazil.jpg','../imgs/toucan-amazon-rainforest-brazil.jpg','../imgs/amazon-river-rainforest-aerial-view-brazil.jpg','../imgs/squirrel-monkey-amazon-rainforest-brazil.jpg','/.netlify/images?url=/imgs/howler-monkey-amazon-rainforest-brazil.jpg&w=1600','../imgs/scarlet-macaw-pair-amazon-brazil.jpg','/.netlify/images?url=/imgs/blue-yellow-macaw-amazon-brazil.jpg&w=1600','../imgs/victoria-regia-giant-water-lily-amazon-brazil.jpg','../imgs/amazon-rainforest-canopy-vista-brazil.jpg'],['Motor Yacht Tucano sunset Amazon river Brazil','Motor Yacht Tucano Amazon river expedition Brazil','Toucan Amazon rainforest Brazil','Amazon river aerial view rainforest Brazil','Squirrel monkey Amazon rainforest Brazil','Howler monkey Amazon rainforest Brazil','Scarlet macaw pair Amazon Brazil','Blue and yellow macaw Amazon Brazil','Victoria regia giant water lily Amazon Brazil','Amazon rainforest canopy vista Brazil']);
+  var b = makeCarousel('amazonPC',['../imgs/motor-yacht-tucano-sunset-amazon-river-brazil.jpg','../imgs/motor-yacht-tucano-amazon-river-brazil.jpg','../imgs/toucan-amazon-rainforest-brazil%20(1).jpg','../imgs/amazon-river-rainforest-aerial-view-brazil.jpg','../imgs/squirrel-monkey-amazon-rainforest-brazil.jpg','/.netlify/images?url=/imgs/howler-monkey-amazon-rainforest-brazil.jpg&w=1600','../imgs/scarlet-macaw-pair-amazon-brazil.jpg','/.netlify/images?url=/imgs/blue-yellow-macaw-amazon-brazil.jpg&w=1600','../imgs/victoria-regia-giant-water-lily-amazon-brazil.jpg','../imgs/amazon-rainforest-canopy-vista-brazil.jpg'],['Motor Yacht Tucano sunset Amazon river Brazil','Motor Yacht Tucano Amazon river expedition Brazil','Toucan Amazon rainforest Brazil','Amazon river aerial view rainforest Brazil','Squirrel monkey Amazon rainforest Brazil','Howler monkey Amazon rainforest Brazil','Scarlet macaw pair Amazon Brazil','Blue and yellow macaw Amazon Brazil','Victoria regia giant water lily Amazon Brazil','Amazon rainforest canopy vista Brazil']);
   b += '<p class="panel-desc">' + c.desc + '</p>';
   b += '<div class="panel-highlight-box"><p>&#127757; <strong style="color:#7EC89A">Complejo de Conservación del Amazonas Central UNESCO</strong> &mdash; 6 millones de hectáreas. El M/Y Tucano es el único buque de expedición que se adentra tan profundamente.</p></div>';
   b += '<div class="panel-section-title">Itinerary</div><div style="margin-bottom:1.25rem">';
@@ -2206,7 +2206,7 @@ function openAmazonPanel(idx) {
   b += '<p class="panel-notes">'+c.notes+'</p>';
   document.getElementById('panelBody').innerHTML = b;
   var f = '<div class="panel-price-display">Desde <strong>'+c.price+'</strong> per persona</div>';
-  f += '<a class="btn-download-pdf" href="TupiTour_Amazon_Tucano_Guide.pdf" download>&#8595; Descargar folleto completo del Amazonas (PDF)</a>';
+  f += '<a class="btn-download-pdf" href="/TupiTour_Amazon_Tucano_Guide.pdf" download>&#8595; Descargar folleto completo del Amazonas (PDF)</a>';
   f += '<button class="btn-contact-form" id="toggleFormBtn">Háblanos &mdash; book this expedition</button>';
   f += '<button class="btn-close-panel" onclick="openAmazonMenu()" style="margin-top:0.4rem">&#8592; Volver a expediciones</button>';
   f += '<div class="panel-contact-form" id="panelForm">';
@@ -3356,7 +3356,7 @@ function openLencoisMenu() {
   document.getElementById('panelFooter').innerHTML = f;
   var tb=document.getElementById('toggleFormBtn'); if(tb) tb.addEventListener('click',toggleContactForm);
   var sb=document.getElementById('sendInqBtn'); if(sb) sb.addEventListener('click', function(){ var em=document.getElementById('formEmail'); if(em && !isValidEmail(em.value.trim())){ em.style.borderColor='#c0392b'; em.focus(); alert('Por favor ingresa un email válido.'); return; } if(em) em.style.borderColor=''; sb.textContent="¡Enviado! Te responderemos en 48h."; sb.style.background='#1B2F6E'; sb.disabled=true; });
-  document.getElementById('panelFooter').innerHTML += '<a class="btn-download-pdf" href="TupiTour_Lencois_PortoPreguicas_2026.pdf" download>&#8595; Descargar folleto Lençóis Maranhenses (PDF)</a>';
+  document.getElementById('panelFooter').innerHTML += '<a class="btn-download-pdf" href="/TupiTour_Lencois_PortoPreguicas_2026.pdf" download>&#8595; Descargar folleto Lençóis Maranhenses (PDF)</a>';
   document.getElementById('tourPanel').classList.add('open');
   document.getElementById('overlay').classList.add('open');
 }
@@ -3388,7 +3388,7 @@ function openLencoisChalet(idx) {
   b+='<p class="panel-notes" style="border-left:3px solid #D4A843;background:#fffdf0">Check-in: 14h | Check-out: 12h. Precios en USD convertidos desde BRL a tarifa de referencia — el monto final puede variar con el tipo de cambio. Cancelación: 7+ días antes del check-in sin cargo; dentro de 7 días, tarifa de 1 noche. Tarifa de servicio Tupi Tour no reembolsable.</p>';
   document.getElementById('panelBody').innerHTML=b;
   var f='<div class="panel-price-display"><strong>'+c.price+'</strong> / noche</div>';
-  f+='<a class="btn-download-pdf" href="TupiTour_Lencois_PortoPreguicas_2026.pdf" download>&#8595; Descargar folleto completo Lençóis (PDF)</a>';
+  f+='<a class="btn-download-pdf" href="/TupiTour_Lencois_PortoPreguicas_2026.pdf" download>&#8595; Descargar folleto completo Lençóis (PDF)</a>';
   f+='<button class="btn-contact-form" id="toggleFormBtn">Háblanos — book this chalet</button>';
   f+='<button class="btn-close-panel" onclick="openLencoisMenu()" style="margin-top:0.4rem">&#8592; Volver a chalés</button>';
   f+='<div class="panel-contact-form" id="panelForm">';
@@ -3513,7 +3513,7 @@ function openPantanalMenu() {
   b += '</div>';
   b += '<div class="panel-highlight-box"><p>&#128062; <strong style="color:#7EC89A">Pousada Araras Eco Lodge</strong> &mdash; Guías naturalistas bilingües, pensión completa, todas las actividades incluidas. Certificada por Roteiros de Charme y Turismo Responsável.</p></div>';
   document.getElementById('panelBody').innerHTML = b;
-  document.getElementById('panelFooter').innerHTML = '<button class="btn-contact-form" onclick="window.open(\'https://wa.me/5521988042225?text=Hi!%20I%20would%20like%20to%20plan%20a%20Pantanal%20trip.\',\'_blank\')" style="cursor:pointer">Háblanos — Plan your Pantanal trip</button><button class="btn-close-panel" onclick="closePanel()">Cerrar</button><a class="btn-download-pdf" href="TupiTour_Pantanal_Guide.pdf" download>&#8595; Descargar folleto del Pantanal (PDF)</a>';
+  document.getElementById('panelFooter').innerHTML = '<button class="btn-contact-form" onclick="window.open(\'https://wa.me/5521988042225?text=Hi!%20I%20would%20like%20to%20plan%20a%20Pantanal%20trip.\',\'_blank\')" style="cursor:pointer">Háblanos — Plan your Pantanal trip</button><button class="btn-close-panel" onclick="closePanel()">Cerrar</button><a class="btn-download-pdf" href="/TupiTour_Pantanal_Guide.pdf" download>&#8595; Descargar folleto del Pantanal (PDF)</a>';
   document.getElementById('tourPanel').classList.add('open');
   document.getElementById('overlay').classList.add('open');
 }
@@ -3580,7 +3580,7 @@ function openPantanalPackage(idx) {
   b += '<div style="background:#0A1A0A;border-radius:2px;padding:0.75rem 0.85rem;margin-bottom:1rem"><p style="font-size:0.7rem;color:rgba(255,255,255,0.6);line-height:1.7;margin:0"><strong style="color:#B5893A;display:block;margin-bottom:0.3rem">Tupi Tour agency fee &mdash; USD 150/person</strong>Non-refundable in all circumstances.</p></div>';
   document.getElementById('panelBody').innerHTML = b;
   var f = '<div class="panel-price-display">Price <strong>on request</strong> &mdash; contact us for a quote</div>';
-  f += '<a class="btn-download-pdf" href="TupiTour_Pantanal_Guide.pdf" download>&#8595; Download full Pantanal brochure (PDF)</a>';
+  f += '<a class="btn-download-pdf" href="/TupiTour_Pantanal_Guide.pdf" download>&#8595; Download full Pantanal brochure (PDF)</a>';
   f += '<button class="btn-contact-form" id="toggleFormBtn">Háblanos &mdash; book this program</button>';
   f += '<button class="btn-close-panel" onclick="openPantanalMenu()" style="margin-top:0.4rem">&#8592; Volver a programas</button>';
   f += '<div class="panel-contact-form" id="panelForm">';
