@@ -131,8 +131,6 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: JSON.stringify({ error: priceError }) };
   }
 
-  // The rate is fetched on the server. brlRate from the browser is ignored.
-  const rate = await getServerRate();
 
   // Return URLs are built on the server (the browser can no longer choose them).
   // The Spanish site returns to /es/, everything else to the home page.
@@ -143,13 +141,13 @@ exports.handler = async function(event) {
   const returnBase = siteBase + (lang === 'es' ? '/es/' : '/');
 
   const lineItems = items.map(function(item) {
-    // item.price is always in USD (as stored in the cart).
-    // Convert to BRL, round to 2 decimal places, then to centavos (integer).
-    const brlAmount = Math.round(item.price * rate * 100); // centavos
+    // item.price is always in USD (as stored in the cart). The checkout is charged in USD exactly
+    // as advertised on the site (no BRL step, so no double conversion). Stripe settles to the BRL balance.
+    const usdCents = Math.round(item.price * 100);
 
     return {
       price_data: {
-        currency: 'brl',
+        currency: 'usd',
         product_data: {
           name: item.name,
           description: [
@@ -157,10 +155,10 @@ exports.handler = async function(event) {
             item.time ? '🕐 ' + item.time : null,
             item.group ? '👥 ' + item.group + ' people' : null,
             item.priceLabel || null,
-            'USD ' + item.price + ' · Rate: 1 USD = R$ ' + rate.toFixed(2)
+            'USD ' + item.price
           ].filter(Boolean).join('  ·  ')
         },
-        unit_amount: brlAmount
+        unit_amount: usdCents
       },
       quantity: 1
     };
@@ -190,6 +188,8 @@ exports.handler = async function(event) {
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
+      // The price is already in the advertised currency: no local-currency conversion on top.
+      adaptive_pricing: { enabled: false },
       customer_email: guestEmail || undefined,
       metadata: Object.assign({}, itemMeta, {
         item_count: String(items.length),
@@ -197,7 +197,6 @@ exports.handler = async function(event) {
         guest_email: guestEmail || '',
         tours: items.map(function(i) { return i.name; }).join(', '),
         dates: items.map(function(i) { return i.date || ''; }).join(' | '),
-        usd_rate: String(rate),
         // Keys the confirmation emails read (stripe-webhook.js).
         tour_name: metaText(items.map(function(i) { return i.name; }).join(', ')),
         tour_date: metaText(items.map(function(i) { return i.date || ''; }).join(' | ')),
