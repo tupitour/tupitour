@@ -2813,6 +2813,58 @@ var MULTI_DAY_TOURS = {
   'City Tour Rio — 5 days': 5
 };
 
+// Tours priced by group size (1 to 4 people). Other tours use one price per group.
+var GROUP_PRICES = {
+  'Pantanal Carioca': [150, 180, 190, 200],
+  'Rafting': [250, 270, 410, 430]
+};
+
+function selectedGroupSize() {
+  var el = document.getElementById('calGroup');
+  var g = el ? parseInt(el.value, 10) : 1;
+  return (g >= 1 && g <= 4) ? g : 1;
+}
+
+function tourUnitPrice(name, g) {
+  var gp = GROUP_PRICES[name];
+  if (gp) return gp[((g >= 1 && g <= 4) ? g : 1) - 1];
+  var t = tours[name];
+  return t ? (t.price || 0) : 0;
+}
+
+function setupGroupPick() {
+  var wrap = document.getElementById('calGroupPick');
+  var sel = document.getElementById('calGroupPickSel');
+  var formField = document.getElementById('calGroup') ? document.getElementById('calGroup').parentNode : null;
+  var gp = GROUP_PRICES[calTour];
+  if (wrap) wrap.style.display = gp ? '' : 'none';
+  if (formField) formField.style.display = gp ? 'none' : '';
+  if (!gp || !sel) return;
+  var cur = selectedGroupSize();
+  sel.innerHTML = '';
+  for (var g = 1; g <= 4; g++) {
+    var op = document.createElement('option');
+    op.value = String(g);
+    op.textContent = (g === 1 ? '1 persona' : g + ' personas') + ' — USD ' + gp[g - 1] + ' por grupo';
+    if (g === cur) op.selected = true;
+    sel.appendChild(op);
+  }
+}
+
+function onGroupPick(v) {
+  var el = document.getElementById('calGroup');
+  if (el) el.value = v;
+  refreshPaymentAmounts();
+}
+
+function refreshPaymentAmounts() {
+  var daysNeeded = MULTI_DAY_TOURS[calTour] || 1;
+  var base = tourUnitPrice(calTour, selectedGroupSize());
+  document.getElementById('calDepositAmount').textContent = 'USD ' + (30 * daysNeeded);
+  var full = Math.round(base * daysNeeded * 0.9);
+  document.getElementById('calFullAmount').textContent = full > 0 ? 'USD ' + full : document.getElementById('calFullAmount').textContent;
+}
+
 var timeSlots = ['6:00 AM','7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM'];
 var months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
@@ -3048,7 +3100,8 @@ function showPaymentOptions() {
   var tour = tours[calTour];
   if (!tour) return;
   var daysNeeded = MULTI_DAY_TOURS[calTour] || 1;
-  var basePrice = tour.price || 0;
+  setupGroupPick();
+  var basePrice = tourUnitPrice(calTour, selectedGroupSize());
   var depositTotal = 30 * daysNeeded;
   var fullTotal = Math.round(basePrice * daysNeeded * 0.9);
 
@@ -3101,7 +3154,8 @@ function submitFlexible() {
 
   // Calculate prices
   var tour = tours[calTour];
-  var basePrice = tour ? (tour.price || 0) : 0;
+  setupGroupPick();
+  var basePrice = tour ? tourUnitPrice(calTour, selectedGroupSize()) : 0;
   var daysNeeded = MULTI_DAY_TOURS[calTour] || 1;
   var depositTotal = 30 * daysNeeded;
   var fullTotal = Math.round(basePrice * daysNeeded * 0.9);
@@ -3151,7 +3205,7 @@ function submitBooking() {
   var t = tours[calTour];
   var daysCount = daysNeeded || 1;
   var depositAmt = 30 * daysCount;
-  var fullAmt = Math.round((t.price || 0) * daysCount * 0.9);
+  var fullAmt = Math.round(tourUnitPrice(calTour, parseInt(group, 10)) * daysCount * 0.9);
 
   var cartPrice = calPayment === 'deposit' ? depositAmt : fullAmt;
   var paymentTypeLabel = calPayment === 'deposit'
@@ -3790,6 +3844,10 @@ var TOUR_CAROUSELS = {
 
       <!-- Payment option (shown after date/time selection) -->
       <div id="calPaymentOption" style="display:none;margin-bottom:1rem;">
+        <div id="calGroupPick" style="display:none;margin-bottom:1rem;">
+          <div style="font-size:0.72rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--light);margin-bottom:0.6rem;">¿Cuántas personas?</div>
+          <select id="calGroupPickSel" onchange="onGroupPick(this.value)" style="width:100%;padding:0.75rem 0.85rem;border:2px solid var(--green);border-radius:2px;font-size:0.85rem;background:#fff;color:var(--dark);"></select>
+        </div>
         <div style="font-size:0.72rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--light);margin-bottom:0.6rem;">¿Cómo quieres pagar?</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
           <div id="calOptDeposit" onclick="selectPaymentOption('deposit')" style="border:2px solid var(--border);border-radius:2px;padding:0.85rem;cursor:pointer;transition:border-color 0.15s;">
