@@ -2,31 +2,59 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
-async function blockDateInSupabase(date, tourName, guestName) {
-  if (!date || date === 'Flexible dates (TBC)') return;
-  const dates = date.split(', ');
-  for (const d of dates) {
-    const clean = d.trim();
-    if (!clean.match(/^\d{4}-\d{2}-\d{2}$/)) continue;
-    try {
-      await fetch(SUPABASE_URL + '/rest/v1/blocked_dates', {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_SERVICE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({
-          date: clean,
-          note: tourName + (guestName ? ' — ' + guestName : ''),
-          source: 'stripe'
-        })
-      });
-    } catch(e) {
-      console.error('Supabase block error:', e.message);
-    }
+// Server-side price check. Same rule as the site (index.html and es/index.html):
+// fixed USD price per tour; a calendar booking is a deposit (USD 30 x days)
+// or the full amount with 10% off (price x days x 0.9, rounded).
+// Keep this table in sync with the `tours` object in index.html.
+const TOUR_PRICES = {
+  'Sunrise Tour': 180,
+  'Airport Arrival Tour': 380,
+  'Airport Departure Tour': 380,
+  'City Tour Rio': 280,
+  'City Tour Rio \u2014 3 days': 260,
+  'City Tour Rio \u2014 5 days': 250,
+  'Tijuca Forest': 230,
+  'Coast to Coast': 280,
+  'Food Tour Rio': 200,
+  'Pantanal Carioca': 150,
+  'Pequena \u00c1frica': 230,
+  'Favela Tour \u2014 Rocinha': 230,
+  'Rafting': 250,
+  'Petr\u00f3polis': 380
+};
+const MULTI_DAY_TOURS = {
+  'City Tour Rio \u2014 3 days': 3,
+  'City Tour Rio \u2014 5 days': 5
+};
+
+function allowedPrices(name) {
+  const base = TOUR_PRICES[name];
+  if (typeof base !== 'number') return null;
+  const days = MULTI_DAY_TOURS[name] || 1;
+  return [base, 30 * days, Math.round(base * days * 0.9)];
+}
+
+function validateItems(items) {
+  for (const item of items) {
+    if (!item || typeof item.name !== 'string') return 'Invalid item';
+    const allowed = allowedPrices(item.name);
+    if (!allowed) return 'Unknown tour';
+    if (typeof item.price !== 'number' || allowed.indexOf(item.price) === -1) return 'Invalid price';
   }
+  return null;
+}
+
+// USD to BRL rate fetched on the server (same source the site uses).
+// Falls back to the same conservative 6.0 the site uses if the lookup fails.
+async function getServerRate() {
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/USD');
+    const data = await res.json();
+    if (data && data.rates && typeof data.rates.BRL === 'number' && data.rates.BRL > 1) return data.rates.BRL;
+  } catch (e) {
+    console.error('FX fetch error:', e.message);
+  }
+  return 6.0;
 }
 
 exports.handler = async function(event) {
@@ -41,15 +69,23 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
-  const { items, guestName, guestEmail, successUrl, cancelUrl, brlRate } = body;
+  const { items, guestName, guestEmail, lang } = body;
 
   if (!items || !Array.isArray(items) || items.length === 0) {
     return { statusCode: 400, body: JSON.stringify({ error: 'No items in cart' }) };
   }
 
-  // brlRate is sent from the frontend (USD→BRL rate fetched at checkout time).
-  // Fallback to a conservative rate if not provided — this should not happen in practice.
-  const rate = (typeof brlRate === 'number' && brlRate > 1) ? brlRate : 6.0;
+  const priceError = validateItems(items);
+  if (priceError) {
+    return { statusCode: 400, body: JSON.stringify({ error: priceError }) };
+  }
+
+  // The rate is fetched on the server. brlRate from the browser is ignored.
+  const rate = await getServerRate();
+
+  // Return URLs are built on the server (the browser can no longer choose them).
+  // The Spanish site returns to /es/, everything else to the home page.
+  const returnBase = 'https://tupitour.com' + (lang === 'es' ? '/es/' : '/');
 
   const lineItems = items.map(function(item) {
     // item.price is always in USD (as stored in the cart).
@@ -88,8 +124,8 @@ exports.handler = async function(event) {
         dates: items.map(function(i) { return i.date || ''; }).join(' | '),
         usd_rate: String(rate)
       },
-      success_url: successUrl || 'https://www.tupitour.com/?payment=success',
-      cancel_url: cancelUrl || 'https://www.tupitour.com/?payment=cancelled',
+      success_url: returnBase + '?payment=success&session_id={CHECKOUT_SESSION_ID}',
+      cancel_url: returnBase + '?payment=cancelled',
     });
 
     for (const item of items) {
@@ -111,3 +147,5 @@ exports.handler = async function(event) {
     };
   }
 };
+
+exports._test = { validateItems, allowedPrices };
