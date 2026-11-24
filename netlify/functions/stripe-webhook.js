@@ -41,7 +41,7 @@ function buildItemRows(items, lines, currency) {
       : (it.p === 'deposit' ? 'Deposit paid. Balance due on the day of the tour.' : '');
     const rows = [
       ['Date', it.d || 'To be confirmed'],
-      it.pd && it.pd.length ? ['Partner guide', 'Another commitment already exists on ' + esc(it.pd.join(', ')) + ', so a Tupi Tour partner guide will lead this tour on ' + (it.pd.length > 1 ? 'those dates' : 'that date') + '.'] : null,
+      it.pd && it.pd.length ? ['Partner guide', 'Tupi Tour may assign a partner guide for ' + esc(it.pd.join(', ')) + '. We will confirm who will lead your tour.'] : null,
       it.t ? ['Time', it.t] : null,
       it.g ? ['Group size', it.g] : null,
       ['Price in cart', 'USD ' + esc(it.u)],
@@ -58,8 +58,11 @@ function buildClientReceiptHtml(session, lines) {
   const items = readItems(session);
   const name     = session.customer_details?.name   || 'Valued Guest';
   const email    = session.customer_details?.email  || '';
-  const amount   = ((session.amount_total || 0) / 100).toFixed(2);
-  const currency = (session.currency || 'usd').toUpperCase();
+  // With Adaptive Pricing the session keeps the settlement currency; presentment_details holds
+  // what the customer was shown and charged at checkout (Stripe API 2025-03-31 and later).
+  const pres     = session.presentment_details && typeof session.presentment_details.presentment_amount === 'number' ? session.presentment_details : null;
+  const amount   = (((pres ? pres.presentment_amount : session.amount_total) || 0) / 100).toFixed(2);
+  const currency = (pres ? pres.presentment_currency : (session.currency || 'usd')).toUpperCase();
   const tourName = session.metadata?.tour_name || session.metadata?.tours || 'Tupi Tour Experience';
   const tourDate = session.metadata?.tour_date  || session.metadata?.dates || 'To be confirmed';
   const payTypes = String(session.metadata?.payment_type || '').split(',').map(function(t) { return t.trim(); }).filter(Boolean);
@@ -155,10 +158,10 @@ function buildClientReceiptHtml(session, lines) {
                 </tr>
 `}
                 <tr style="border-top:1px solid #E5E3DE;background:#FAFAF8;">
-                  <td style="padding:12px 16px;font-size:13px;color:#555555;">${items.length ? 'Total charged' : 'Amount paid'}</td>
+                  <td style="padding:12px 16px;font-size:13px;color:#555555;">${items.length ? 'Total paid' : 'Amount paid'}</td>
                   <td style="padding:12px 16px;font-size:15px;font-weight:700;color:#1B7A3E;">
                     ${currency} ${amount}
-                    ${items.length ? '<div style="font-size:11px;font-weight:400;color:#777777;margin-top:4px;">Cart price: USD ' + items.reduce(function(s, x) { return s + (Number(x.u) || 0); }, 0) + (session.adaptive_pricing && session.adaptive_pricing.enabled ? '. Your card may show this amount in USD, at the exchange rate offered at checkout.' : '') + '</div>' : ''}
+                    ${items.length ? '<div style="font-size:11px;font-weight:400;color:#777777;margin-top:4px;">Cart price: USD ' + items.reduce(function(s, x) { return s + (Number(x.u) || 0); }, 0) + (pres ? '. Total includes the currency conversion applied by Stripe at checkout.' : '') + '</div>' : ''}
                   </td>
                 </tr>
                 <tr style="border-top:1px solid #E5E3DE;">
