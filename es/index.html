@@ -2649,8 +2649,7 @@ async function checkout() {
       guestName: guestName,
       guestEmail: guestEmail,
       brlRate: rate,
-      successUrl: window.location.origin + '/?payment=success',
-      cancelUrl: window.location.origin + '/?payment=cancelled'
+      lang: (document.documentElement.lang || 'en').slice(0, 2)
     })
   })
   .then(function(res) { return res.json(); })
@@ -4075,6 +4074,36 @@ function closeGetInTouch(){document.getElementById('getInTouchModal').style.disp
 document.getElementById('getInTouchModal').addEventListener('click',function(e){if(e.target===this)closeGetInTouch();});
 </script>
 
+<script>
+// Result message after returning from Stripe Checkout.
+// The "paid" message is shown only after the server confirms the Stripe session.
+(function() {
+  var p = new URLSearchParams(window.location.search);
+  var state = p.get('payment');
+  if (state !== 'success' && state !== 'cancelled') return;
+  var sid = p.get('session_id') || '';
+  function show(text) {
+    var el = document.createElement('div');
+    el.setAttribute('role', 'status');
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;padding:14px 48px 14px 18px;background:#1B2F6E;color:#fff;font:500 15px/1.4 sans-serif;text-align:center;';
+    el.textContent = text;
+    var x = document.createElement('button');
+    x.textContent = '\u00d7';
+    x.setAttribute('aria-label', 'Close');
+    x.style.cssText = 'position:absolute;right:12px;top:8px;background:none;border:0;color:#fff;font-size:24px;cursor:pointer;';
+    x.onclick = function() { el.remove(); };
+    el.appendChild(x);
+    document.body.appendChild(el);
+  }
+  history.replaceState(null, '', window.location.pathname);
+  if (state === 'cancelled') { show("Pago cancelado. Puedes intentarlo de nuevo."); return; }
+  if (!/^cs_(live|test)_[A-Za-z0-9]+$/.test(sid)) { show("Todav\u00eda no pudimos confirmar tu pago. Si se te cobr\u00f3, escr\u00edbenos a flavio@tupitour.com."); return; }
+  fetch('/.netlify/functions/checkout-status?session_id=' + encodeURIComponent(sid))
+    .then(function(r) { return r.json(); })
+    .then(function(d) { show(d && d.payment_status === 'paid' ? "Pago recibido. Gracias." : "Todav\u00eda no pudimos confirmar tu pago. Si se te cobr\u00f3, escr\u00edbenos a flavio@tupitour.com."); })
+    .catch(function() { show("Todav\u00eda no pudimos confirmar tu pago. Si se te cobr\u00f3, escr\u00edbenos a flavio@tupitour.com."); });
+})();
+</script>
 </body>
 </html>
 
