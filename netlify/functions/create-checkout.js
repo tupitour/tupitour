@@ -57,6 +57,34 @@ function validateItems(items) {
   return null;
 }
 
+// Block the booked dates in Supabase after the Stripe session is created.
+async function blockDateInSupabase(date, tourName, guestName) {
+  if (!date || date === 'Flexible dates (TBC)') return;
+  const dates = date.split(', ');
+  for (const d of dates) {
+    const clean = d.trim();
+    if (!clean.match(/^\d{4}-\d{2}-\d{2}$/)) continue;
+    try {
+      await fetch(SUPABASE_URL + '/rest/v1/blocked_dates', {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_SERVICE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          date: clean,
+          note: tourName + (guestName ? ' — ' + guestName : ''),
+          source: 'stripe'
+        })
+      });
+    } catch(e) {
+      console.error('Supabase block error:', e.message);
+    }
+  }
+}
+
 // USD to BRL rate fetched on the server (same source the site uses).
 // Falls back to the same conservative 6.0 the site uses if the lookup fails.
 async function getServerRate() {
