@@ -16,11 +16,16 @@ function buildClientReceiptHtml(session) {
   const email    = session.customer_details?.email  || '';
   const amount   = ((session.amount_total || 0) / 100).toFixed(2);
   const currency = (session.currency || 'usd').toUpperCase();
-  const tourName = session.metadata?.tour_name || 'Tupi Tour Experience';
-  const tourDate = session.metadata?.tour_date  || 'To be confirmed';
-  const payType  = session.metadata?.payment_type === 'deposit'
-    ? 'Deposit (balance due on the day)'
-    : 'Full payment';
+  const tourName = session.metadata?.tour_name || session.metadata?.tours || 'Tupi Tour Experience';
+  const tourDate = session.metadata?.tour_date  || session.metadata?.dates || 'To be confirmed';
+  const payTypes = String(session.metadata?.payment_type || '').split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+  const payType  = !payTypes.length
+    ? 'Not specified'
+    : (payTypes.every(function(t) { return t === 'deposit'; })
+      ? 'Deposit (balance due on the day)'
+      : (payTypes.every(function(t) { return t === 'full'; })
+        ? 'Full payment'
+        : 'Deposit for some tours, full payment for others'));
   const sessionId = session.id;
 
   return `<!DOCTYPE html>
@@ -163,8 +168,8 @@ function buildAdminNotificationHtml(session) {
   const clientEmail = session.customer_details?.email || 'Unknown';
   const amount      = ((session.amount_total || 0) / 100).toFixed(2);
   const currency    = (session.currency || 'usd').toUpperCase();
-  const tourName    = session.metadata?.tour_name    || 'N/A';
-  const tourDate    = session.metadata?.tour_date    || 'N/A';
+  const tourName    = session.metadata?.tour_name    || session.metadata?.tours || 'N/A';
+  const tourDate    = session.metadata?.tour_date    || session.metadata?.dates || 'N/A';
   const groupSize   = session.metadata?.group_size   || 'N/A';
   const payType     = session.metadata?.payment_type || 'N/A';
   const sessionId   = session.id;
@@ -218,7 +223,7 @@ exports.handler = async (event) => {
   const session = stripeEvent.data.object;
   const clientEmail = session.customer_details?.email;
   const clientName  = session.customer_details?.name || 'Valued Guest';
-  const tourName    = session.metadata?.tour_name || 'Tupi Tour Experience';
+  const tourName    = session.metadata?.tour_name || session.metadata?.tours || 'Tupi Tour Experience';
 
   const errors = [];
 
