@@ -2999,7 +2999,7 @@ function showPartnerNotice() {
     grid.parentNode.insertBefore(msg, grid.nextSibling);
   }
   msg.style.display = '';
-  msg.innerHTML = '<strong>' + taken.map(fmtDay).join(', ') + '</strong>: Tupi Tour puede asignar un guía asociado para esta fecha. Confirmaremos quién guiará tu tour. Puedes reservar con normalidad.';
+  msg.innerHTML = '<strong>' + taken.map(fmtDay).join(', ') + '</strong>: Tupi Tour puede asignar un guía asociado para ' + (taken.length > 1 ? 'estas fechas' : 'esta fecha') + '. Confirmaremos quién guiará tu tour. Puedes reservar con normalidad.';
 }
 
 function selectDate(dateStr) {
