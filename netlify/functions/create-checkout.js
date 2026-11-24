@@ -188,6 +188,8 @@ exports.handler = async function(event) {
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
+      // Hosted checkout page in the language chosen on the site.
+      locale: lang === 'es' ? 'es' : 'en',
       // The price is already in the advertised currency: no local-currency conversion on top.
       adaptive_pricing: { enabled: false },
       customer_email: guestEmail || undefined,
