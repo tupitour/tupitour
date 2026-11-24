@@ -41,10 +41,10 @@ function buildItemRows(items, lines, currency) {
       : (it.p === 'deposit' ? 'Deposit paid. Balance due on the day of the tour.' : '');
     const rows = [
       ['Date', it.d || 'To be confirmed'],
+      it.pd && it.pd.length ? ['Partner guide', 'Another commitment already exists on ' + esc(it.pd.join(', ')) + ', so a Tupi Tour partner guide will lead this tour on ' + (it.pd.length > 1 ? 'those dates' : 'that date') + '.'] : null,
       it.t ? ['Time', it.t] : null,
       it.g ? ['Group size', it.g] : null,
       ['Price in cart', 'USD ' + esc(it.u)],
-      ['Charged', charged],
       status ? ['Status', status] : null
     ].filter(Boolean);
     return '<tr style="border-top:1px solid #E5E3DE;background:#F8F7F4;"><td colspan="2" style="padding:12px 16px;font-size:14px;color:#111111;font-weight:600;">' + esc(it.n) + '</td></tr>' +
@@ -155,9 +155,10 @@ function buildClientReceiptHtml(session, lines) {
                 </tr>
 `}
                 <tr style="border-top:1px solid #E5E3DE;background:#FAFAF8;">
-                  <td style="padding:12px 16px;font-size:13px;color:#555555;">Total paid</td>
+                  <td style="padding:12px 16px;font-size:13px;color:#555555;">${items.length ? 'Total charged' : 'Amount paid'}</td>
                   <td style="padding:12px 16px;font-size:15px;font-weight:700;color:#1B7A3E;">
                     ${currency} ${amount}
+                    ${items.length ? '<div style="font-size:11px;font-weight:400;color:#777777;margin-top:4px;">Cart price: USD ' + items.reduce(function(s, x) { return s + (Number(x.u) || 0); }, 0) + (session.adaptive_pricing && session.adaptive_pricing.enabled ? '. Your card may show this amount in USD, at the exchange rate offered at checkout.' : '') + '</div>' : ''}
                   </td>
                 </tr>
                 <tr style="border-top:1px solid #E5E3DE;">
