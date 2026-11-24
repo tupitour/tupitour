@@ -25,6 +25,38 @@ function readItems(session) {
   return items;
 }
 
+
+// Receipt language: the site language saved by create-checkout.js in the session metadata (lang). Anything but "es" is English.
+// Spanish texts are a draft for the owner's review.
+const TX = {
+  es: {
+    'Booking Confirmed': 'Reserva confirmada',
+    'Hi': 'Hola',
+    'intro': 'Tu reserva est\u00e1 confirmada. Tupi Tour se pondr\u00e1 en contacto contigo en un plazo de 24 horas para ultimar los detalles y resolver cualquier duda. Estamos deseando mostrarte Brasil.',
+    'Booking Summary': 'Resumen de la reserva',
+    'Date': 'Fecha', 'To be confirmed': 'Por confirmar', 'Time': 'Hora', 'Group size': 'Tama\u00f1o del grupo',
+    'Partner guide': 'Gu\u00eda asociado',
+    'partner': function(d) { return 'Tupi Tour podr\u00e1 asignar un gu\u00eda asociado para ' + d + '. Te confirmaremos qui\u00e9n dirigir\u00e1 tu tour.'; },
+    'Tour price': 'Precio del tour',
+    'Full-payment discount (10%)': 'Descuento por pago completo (10%)',
+    'Paid in full': 'Pagado completo', 'Amount paid': 'Importe pagado', 'Deposit paid': 'Anticipo pagado',
+    'Remaining, due on the day of the tour': 'Pendiente, a pagar el d\u00eda del tour',
+    'Amount': 'Importe', 'Order total': 'Total del pedido', 'Paid': 'Pagado', 'Status': 'Estado',
+    'Reference': 'Referencia', 'What happens next': 'Pr\u00f3ximos pasos',
+    'next1': 'Tupi Tour te escribir\u00e1 en un plazo de <strong>24 horas</strong> para confirmar todos los detalles.',
+    'next2': 'Tambi\u00e9n puedes escribirnos directamente por',
+    'next3': 'Conserva este correo como comprobante.',
+    'Questions?': '\u00bfPreguntas? Responde a este correo o escr\u00edbenos por'
+  }
+};
+function tr(lang, k, a) {
+  const d = TX[lang];
+  const v = d && d[k];
+  if (v === undefined) return null;
+  return typeof v === 'function' ? v(a) : v;
+}
+function langOf(session) { return session && session.metadata && session.metadata.lang === 'es' ? 'es' : 'en'; }
+
 // One block per tour: what was chosen, what Stripe charged for that line.
 // The balance amount is not shown: the site states it is due on the day and
 // the order does not store a balance figure.
@@ -41,13 +73,15 @@ function orderFigures(items) {
   return { total: total, paid: paid, remaining: Math.max(0, total - paid) };
 }
 
-function totalsRows(items, session, extra) {
+function totalsRows(items, session, extra, lang) {
+  const T = function(k) { return tr(lang, k) || k; };
   const f = orderFigures(items);
   const row = function(l, v, strong) { return '<tr style="border-top:1px solid #E5E3DE;"><td style="padding:12px 16px;font-size:13px;color:#555555;">' + l + '</td><td style="padding:12px 16px;font-size:' + (strong ? '15px;font-weight:700;color:#1B7A3E' : '14px;color:#111111') + ';">' + v + '</td></tr>'; };
-  return row('Order total', usd(f.total)) + row('Paid', usd(f.paid)) + (f.remaining > 0 ? row('Remaining, due on the day of the tour', usd(f.remaining), true) : row('Status', 'Paid in full', true)) + (extra || '');
+  return row(T('Order total'), usd(f.total)) + row(T('Paid'), usd(f.paid)) + (f.remaining > 0 ? row(T('Remaining, due on the day of the tour'), usd(f.remaining), true) : row(T('Status'), T('Paid in full'), true)) + (extra || '');
 }
 
-function buildItemRows(items, lines, currency) {
+function buildItemRows(items, lines, currency, lang) {
+  const T = function(k) { return tr(lang, k) || k; };
   return items.map(function(it, idx) {
     const line = lines && lines[idx];
     const charged = line && typeof line.amount_total === 'number'
@@ -55,16 +89,16 @@ function buildItemRows(items, lines, currency) {
       : 'not available';
     const status = '';
     const rows = [
-      ['Date', it.d || 'To be confirmed'],
-      it.pd && it.pd.length ? ['Partner guide', 'Tupi Tour may assign a partner guide for ' + esc(it.pd.join(', ')) + '. We will confirm who will lead your tour.'] : null,
-      it.t ? ['Time', it.t] : null,
-      it.g ? ['Group size', it.g] : null,
-      it.lp ? ['Tour price', usd(it.lp)] : null,
-      it.p === 'full' && it.lp && Number(it.lp) > Number(it.u) ? ['Full-payment discount (10%)', '\u2212' + usd(Number(it.lp) - Number(it.u))] : null,
-      it.p === 'full' ? [it.lp ? 'Paid in full' : 'Amount paid', usd(it.u)] : null,
-      it.p === 'deposit' ? ['Deposit paid', usd(it.u)] : null,
-      it.p === 'deposit' && it.lp ? ['Remaining, due on the day of the tour', usd(Number(it.lp) - Number(it.u))] : null,
-      it.p !== 'full' && it.p !== 'deposit' ? ['Amount', usd(it.u)] : null,
+      [T('Date'), it.d || T('To be confirmed')],
+      it.pd && it.pd.length ? [T('Partner guide'), lang === 'es' ? tr(lang, 'partner', esc(it.pd.join(', '))) : 'Tupi Tour may assign a partner guide for ' + esc(it.pd.join(', ')) + '. We will confirm who will lead your tour.'] : null,
+      it.t ? [T('Time'), it.t] : null,
+      it.g ? [T('Group size'), it.g] : null,
+      it.lp ? [T('Tour price'), usd(it.lp)] : null,
+      it.p === 'full' && it.lp && Number(it.lp) > Number(it.u) ? [T('Full-payment discount (10%)'), '\u2212' + usd(Number(it.lp) - Number(it.u))] : null,
+      it.p === 'full' ? [it.lp ? T('Paid in full') : T('Amount paid'), usd(it.u)] : null,
+      it.p === 'deposit' ? [T('Deposit paid'), usd(it.u)] : null,
+      it.p === 'deposit' && it.lp ? [T('Remaining, due on the day of the tour'), usd(Number(it.lp) - Number(it.u))] : null,
+      it.p !== 'full' && it.p !== 'deposit' ? [T('Amount'), usd(it.u)] : null,
       status ? ['Status', status] : null
     ].filter(Boolean);
     return '<tr style="border-top:1px solid #E5E3DE;background:#F8F7F4;"><td colspan="2" style="padding:12px 16px;font-size:14px;color:#111111;font-weight:600;">' + esc(it.n) + '</td></tr>' +
@@ -95,20 +129,22 @@ function buildClientReceiptHtml(session, lines) {
         : 'Deposit for some tours, full payment for others'));
   const groupSize = String(session.metadata?.group_size || 'Not specified');
   const sessionId = session.id;
+  const lang = langOf(session);
+  const T = function(k) { return tr(lang, k) || k; };
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Booking Confirmed — Tupi Tour</title>
+  <title>${T('Booking Confirmed')} — Tupi Tour</title>
 </head>
 <body style="margin:0;padding:0;background:#F8F7F4;font-family:'Helvetica Neue',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F7F4;padding:40px 0;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0"
-               style="background:#FFFFFF;border-radius:4px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07);">
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="max-width:600px;background:#FFFFFF;border-radius:4px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07);">
 
           <!-- Header bar -->
           <tr>
@@ -118,7 +154,7 @@ function buildClientReceiptHtml(session, lines) {
 
           <!-- Logo / brand -->
           <tr>
-            <td align="center" style="padding:32px 40px 20px;">
+            <td align="center" style="padding:32px 24px 20px;">
               <img src="https://www.tupitour.com/imgs/logo.png"
                    alt="Tupi Tour" width="140"
                    style="display:block;height:auto;border:0;">
@@ -127,40 +163,39 @@ function buildClientReceiptHtml(session, lines) {
 
           <!-- Status badge -->
           <tr>
-            <td align="center" style="padding:0 40px 24px;">
+            <td align="center" style="padding:0 24px 24px;">
               <span style="display:inline-block;background:#1B7A3E;color:#FFFFFF;font-size:13px;font-weight:600;
                            letter-spacing:0.06em;text-transform:uppercase;padding:6px 20px;border-radius:2px;">
-                ✓ Booking Confirmed
+                ✓ ${T('Booking Confirmed')}
               </span>
             </td>
           </tr>
 
           <!-- Greeting -->
           <tr>
-            <td style="padding:0 40px 24px;">
+            <td style="padding:0 24px 24px;">
               <p style="font-size:15px;color:#333333;margin:0;">
-                Hi <strong>${name}</strong>,
+                ${T('Hi')} <strong>${name}</strong>,
               </p>
               <p style="font-size:15px;color:#555555;margin:12px 0 0;line-height:1.6;">
-                Your booking is confirmed. Tupi Tour will be in touch within 24 hours to finalise details
-                and answer any questions you may have. We can't wait to show you Brazil.
+                ${tr(lang, 'intro') || "Your booking is confirmed. Tupi Tour will be in touch within 24 hours to finalise details and answer any questions you may have. We can't wait to show you Brazil."}
               </p>
             </td>
           </tr>
 
           <!-- Booking summary table -->
           <tr>
-            <td style="padding:0 40px 32px;">
+            <td style="padding:0 24px 32px;">
               <table width="100%" cellpadding="0" cellspacing="0"
                      style="border:1px solid #E5E3DE;border-radius:2px;overflow:hidden;">
                 <tr style="background:#F8F7F4;">
                   <td colspan="2"
                       style="padding:12px 16px;font-size:11px;font-weight:600;letter-spacing:0.08em;
                              text-transform:uppercase;color:#AAAAAA;">
-                    Booking Summary
+                    ${T('Booking Summary')}
                   </td>
                 </tr>
-                ${items.length ? buildItemRows(items, lines, currency) : `                <tr style="border-top:1px solid #E5E3DE;">
+                ${items.length ? buildItemRows(items, lines, currency, lang) : `                <tr style="border-top:1px solid #E5E3DE;">
                   <td style="padding:12px 16px;font-size:13px;color:#555555;width:40%;">Tour / Experience</td>
                   <td style="padding:12px 16px;font-size:13px;color:#111111;font-weight:500;">${tourName}</td>
                 </tr>
@@ -177,7 +212,7 @@ function buildClientReceiptHtml(session, lines) {
                   <td style="padding:12px 16px;font-size:13px;color:#111111;">${payType}</td>
                 </tr>
 `}
-${items.length && String(session.currency).toLowerCase() === 'usd' ? totalsRows(items, session) : `                <tr style="border-top:1px solid #E5E3DE;background:#FAFAF8;">
+${items.length && String(session.currency).toLowerCase() === 'usd' ? totalsRows(items, session, '', lang) : `                <tr style="border-top:1px solid #E5E3DE;background:#FAFAF8;">
                   <td style="padding:12px 16px;font-size:13px;color:#555555;">${items.length ? 'Total paid' : 'Amount paid'}</td>
                   <td style="padding:12px 16px;font-size:15px;font-weight:700;color:#1B7A3E;">
                     ${currency} ${amount}
@@ -186,7 +221,7 @@ ${items.length && String(session.currency).toLowerCase() === 'usd' ? totalsRows(
                 </tr>
 `}
                 <tr style="border-top:1px solid #E5E3DE;">
-                  <td style="padding:12px 16px;font-size:11px;color:#AAAAAA;">Reference</td>
+                  <td style="padding:12px 16px;font-size:11px;color:#AAAAAA;">${T('Reference')}</td>
                   <td style="padding:12px 16px;font-size:11px;color:#AAAAAA;word-break:break-all;">${sessionId}</td>
                 </tr>
               </table>
@@ -195,35 +230,35 @@ ${items.length && String(session.currency).toLowerCase() === 'usd' ? totalsRows(
 
           <!-- Next steps -->
           <tr>
-            <td style="padding:0 40px 32px;">
+            <td style="padding:0 24px 32px;">
               <p style="font-size:13px;font-weight:600;color:#111111;margin:0 0 8px;
-                        letter-spacing:0.05em;text-transform:uppercase;">What happens next</p>
+                        letter-spacing:0.05em;text-transform:uppercase;">${T('What happens next')}</p>
               <ul style="margin:0;padding-left:20px;color:#555555;font-size:14px;line-height:1.8;">
-                <li>Tupi Tour will email you within <strong>24 hours</strong> to confirm all details.</li>
-                <li>You can also reach us directly on
+                <li>${tr(lang, 'next1') || 'Tupi Tour will email you within <strong>24 hours</strong> to confirm all details.'}</li>
+                <li>${tr(lang, 'next2') || 'You can also reach us directly on'}
                     <a href="https://wa.me/5521988042225" style="color:#1B7A3E;text-decoration:none;">WhatsApp</a>.
                 </li>
-                <li>Please keep this email as your receipt.</li>
+                <li>${tr(lang, 'next3') || 'Please keep this email as your receipt.'}</li>
               </ul>
             </td>
           </tr>
 
           <!-- Divider -->
           <tr>
-            <td style="padding:0 40px;">
+            <td style="padding:0 24px;">
               <hr style="border:none;border-top:1px solid #E5E3DE;margin:0;">
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td align="center" style="padding:24px 40px 32px;">
+            <td align="center" style="padding:24px 24px 32px;">
               <p style="font-size:12px;color:#AAAAAA;margin:0;">
                 Tupi Tour · Rio de Janeiro, Brazil ·
                 <a href="https://www.tupitour.com" style="color:#AAAAAA;">tupitour.com</a>
               </p>
               <p style="font-size:12px;color:#AAAAAA;margin:6px 0 0;">
-                Questions? Reply to this email or message us on
+                ${tr(lang, 'Questions?') || 'Questions? Reply to this email or message us on'}
                 <a href="https://wa.me/5521988042225" style="color:#AAAAAA;">WhatsApp</a>.
               </p>
             </td>
@@ -377,7 +412,7 @@ exports.handler = async (event) => {
       from: `Tupi Tour <${FROM_EMAIL}>`,
       to:   clientEmail,
       replyTo: ADMIN_EMAIL,
-      subject: `Booking Confirmed — ${tourName}`,
+      subject: (langOf(session) === 'es' ? 'Reserva confirmada' : 'Booking Confirmed') + ` — ${tourName}`,
       html: buildClientReceiptHtml(session, lines),
     });
     if (!r1.ok) {
