@@ -122,6 +122,10 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: JSON.stringify({ error: 'No items in cart' }) };
   }
 
+  if (items.length > 30) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Too many items' }) };
+  }
+
   const priceError = validateItems(items);
   if (priceError) {
     return { statusCode: 400, body: JSON.stringify({ error: priceError }) };
@@ -158,13 +162,20 @@ exports.handler = async function(event) {
     };
   });
 
+  // One metadata key per cart item, saved at checkout time (read by stripe-webhook.js).
+  const itemMeta = {};
+  items.forEach(function(i, idx) {
+    itemMeta['item_' + (idx + 1)] = metaText(JSON.stringify({ n: i.name, d: i.date || '', t: i.time || '', g: i.group || '', p: i.paymentType || '', u: i.price, l: i.priceLabel || '' }));
+  });
+
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
       customer_email: guestEmail || undefined,
-      metadata: {
+      metadata: Object.assign({}, itemMeta, {
+        item_count: String(items.length),
         guest_name: guestName || '',
         guest_email: guestEmail || '',
         tours: items.map(function(i) { return i.name; }).join(', '),
@@ -175,7 +186,7 @@ exports.handler = async function(event) {
         tour_date: metaText(items.map(function(i) { return i.date || ''; }).join(' | ')),
         group_size: metaText(items.map(function(i) { return i.group || ''; }).join(' | ')),
         payment_type: metaText(items.map(function(i) { return i.paymentType || ''; }).join(', '))
-      },
+      }),
       success_url: returnBase + '?payment=success&session_id={CHECKOUT_SESSION_ID}',
       cancel_url: returnBase + '?payment=cancelled',
     });
