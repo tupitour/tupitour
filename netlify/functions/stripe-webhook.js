@@ -466,3 +466,4 @@ exports.handler = async (event) => {
   };
 };
 
+// redeploy marker: Deploy Previews env updated 2026-11-24 (TEST_ONLY_RECIPIENT)
