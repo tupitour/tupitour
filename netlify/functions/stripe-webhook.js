@@ -44,8 +44,8 @@ function buildItemRows(items, lines, currency) {
       it.g ? ['Group size', it.g] : null,
       it.lp ? ['Tour price', 'USD ' + esc(it.lp)] : null,
       it.p === 'full'
-        ? [it.lp ? 'Paid in full' : 'Amount paid', 'USD ' + esc(it.u) + (it.lp ? ' (10% discount applied)' : '')]
-        : (it.p === 'deposit' ? ['Deposit paid', 'USD ' + esc(it.u)] : ['Amount', 'USD ' + esc(it.u)]),
+        ? [it.lp ? 'Applied to tour price (full payment)' : 'Amount paid', 'USD ' + esc(it.u) + (it.lp ? ' (10% discount applied)' : '')]
+        : (it.p === 'deposit' ? ['Deposit applied toward tour price', 'USD ' + esc(it.u)] : ['Amount', 'USD ' + esc(it.u)]),
       it.p === 'deposit' ? ['Balance', 'Due on the day of the tour'] : null,
       status ? ['Status', status] : null
     ].filter(Boolean);
