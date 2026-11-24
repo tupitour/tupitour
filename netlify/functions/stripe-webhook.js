@@ -335,6 +335,16 @@ exports.handler = async (event) => {
     return { statusCode: 200, body: JSON.stringify({ received: true, ignored: stripeEvent.type }) };
   }
 
+  // Live-mail switch (fail closed). A live-mode event is only processed when LIVE_EMAIL_ENABLED is
+  // exactly "1". The variable is meant to exist only in the Production deploy context; anywhere it is
+  // absent (previews, branch deploys, agent runners) a live event sends nothing and answers 500, so it
+  // is visible in Stripe and retried. Sandbox events never need it (they stay behind TEST_ONLY_RECIPIENT).
+  const isLive = stripeEvent.livemode === true;
+  if (isLive && process.env.LIVE_EMAIL_ENABLED !== '1') {
+    console.error('Live event but LIVE_EMAIL_ENABLED is not 1; nothing sent');
+    return { statusCode: 500, body: JSON.stringify({ received: false, error: 'live_email_disabled' }) };
+  }
+
   const session = stripeEvent.data.object;
   const clientEmail = session.customer_details?.email;
   const clientName  = session.customer_details?.name || 'Valued Guest';
@@ -369,10 +379,10 @@ exports.handler = async (event) => {
   // after 24 h can repeat an email; a request whose answer was lost is only protected if Resend
   // had stored the key; this does not prove delivery to the inbox.
   // Test-mode guard (fail closed). Stripe's signed event says livemode=false for sandbox events
-  // (CONTEXT is Netlify's own deploy context, also checked). In test mode an email goes out only if
+  // In test mode an email goes out only if
   // its recipient is EXACTLY one of the addresses in TEST_ONLY_RECIPIENT (comma separated); a
   // missing or empty list blocks every send. Live events in production are not affected.
-  const testMode = stripeEvent.livemode !== true || process.env.CONTEXT === 'deploy-preview';
+  const testMode = !isLive;
   const allowed = String(process.env.TEST_ONLY_RECIPIENT || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
   const skipped = [];
   // In test mode the order itself must come from an allowed address, so an old sandbox order
