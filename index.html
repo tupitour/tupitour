@@ -1132,7 +1132,7 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
   background:var(--green); color:var(--white);
 }
 .cal-day.selected { background:var(--green); color:var(--white); border-color:var(--green); }
-.cal-day.blocked { background:#F0EEE9; color:var(--border); cursor:not-allowed; text-decoration:line-through; }
+.cal-day.blocked { background:#FBF3D6; color:var(--dark); cursor:pointer; }
 .cal-day.past { color:var(--border); cursor:not-allowed; }
 .cal-day.empty { cursor:default; }
 .cal-day.today { border-color:var(--green); font-weight:500; }
@@ -2469,6 +2469,7 @@ function updateCart() {
   var sum = 0;
   var hasDeposit = false;
   var hasFull = false;
+  var anyPartner = false;
 
   cart.forEach(function(item, idx) {
     sum += item.price;
@@ -2484,16 +2485,21 @@ function updateCart() {
     if (item.date && item.date.indexOf('Flexible') > -1) {
       dateInfo = '📅 Flexible dates — to be confirmed';
     } else if (item.date) {
-      dateInfo = '📅 ' + item.date;
+      dateInfo = '📅 ' + item.date.split(', ').map(function(d) { return /^\d{4}-\d{2}-\d{2}$/.test(d) ? fmtDay(d) : d; }).join(', ');
       if (item.time) dateInfo += ' · ' + item.time;
     }
     if (dateInfo) html += '<div class="cart-item-price" style="color:var(--green);margin-top:0.2rem;">' + dateInfo + '</div>';
+
+    if (item.partnerDates && item.partnerDates.length) {
+      anyPartner = true;
+      html += '<div class="cart-item-price" style="margin-top:0.25rem;padding:0.4rem 0.55rem;background:#FBF3D6;border-radius:4px;color:var(--dark);">Partner guide may be assigned for: ' + item.partnerDates.map(fmtDay).join(', ') + '</div>';
+    }
 
     // Group
     if (item.group) html += '<div class="cart-item-price">' + item.group + ' ' + (item.group === '1' ? 'person' : 'people') + '</div>';
 
     // Payment label
-    html += '<div class="cart-item-price" style="margin-top:0.25rem;font-weight:500;color:var(--dark);">' + item.priceLabel + '</div>';
+    html += '<div class="cart-item-price" style="margin-top:0.25rem;font-weight:500;color:var(--dark);">' + (item.priceLabelDisplay || item.priceLabel) + '</div>';
 
     html += '</div>';
     html += '<button class="cart-item-remove" onclick="removeFromCart(' + idx + ')">✕</button>';
@@ -2515,6 +2521,7 @@ function updateCart() {
     } else if (hasFull) {
       note.textContent = '10% discount applied.';
     }
+    if (anyPartner) note.textContent = (note.textContent ? note.textContent + ' ' : '') + 'Tupi Tour will confirm who will lead each of these tours.';
   }
 }
 
@@ -2941,11 +2948,11 @@ function renderCalendar() {
     else if (isSelected) el.classList.add('selected');
     else if (isToday) el.classList.add('today');
 
-    if (!isPast && !isBlocked) {
+    if (!isPast) {
       (function(ds) {
         el.addEventListener('click', function() { selectDate(ds); });
       })(dateStr);
-    } else if (isBlocked) {
+    } else if (false) {
       (function(b) {
         el.addEventListener('click', function() {
           var msg = document.getElementById('calBlockedMsg');
@@ -2967,6 +2974,34 @@ function renderCalendar() {
   }
 }
 
+// A date that already has a block or hold can still be booked: Tupi Tour may assign a partner guide.
+// The notice shows before payment. It does not say the date is confirmed taken. Wording pending review.
+function fmtDay(ds) {
+  var p = ds.split('-');
+  return months[parseInt(p[1], 10) - 1] + ' ' + parseInt(p[2], 10) + ', ' + p[0];
+}
+function partnerDatesFor(dates) {
+  var blocked = getBlocked();
+  return dates.filter(function(d) { return blocked.some(function(b) { return b.date === d; }); });
+}
+
+function showPartnerNotice() {
+  var blocked = getBlocked();
+  var picked = MULTI_DAY_TOURS[calTour] ? calSelectedDates.slice() : (calSelected ? [calSelected] : []);
+  var taken = picked.filter(function(d) { return blocked.some(function(b) { return b.date === d; }); });
+  var msg = document.getElementById('calBlockedMsg');
+  if (!taken.length) { if (msg) msg.style.display = 'none'; return; }
+  if (!msg) {
+    msg = document.createElement('div');
+    msg.id = 'calBlockedMsg';
+    msg.style.cssText = 'margin:0.75rem 0 0;padding:0.75rem 1rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:0.82rem;color:var(--mid);line-height:1.5;';
+    var grid = document.getElementById('calGrid');
+    grid.parentNode.insertBefore(msg, grid.nextSibling);
+  }
+  msg.style.display = '';
+  msg.innerHTML = '<strong>' + taken.map(fmtDay).join(', ') + '</strong>: Tupi Tour may assign a partner guide for this date. We will confirm who will lead your tour. You can book as usual.';
+}
+
 function selectDate(dateStr) {
   var daysNeeded = MULTI_DAY_TOURS[calTour];
 
@@ -2981,6 +3016,7 @@ function selectDate(dateStr) {
     }
     updateMultiProgress(daysNeeded);
     renderCalendar();
+    showPartnerNotice();
 
     // Only proceed to time slots when all dates selected
     if (calSelectedDates.length === daysNeeded) {
@@ -2995,6 +3031,7 @@ function selectDate(dateStr) {
     calSelected = dateStr;
     calTime = null;
     renderCalendar();
+    showPartnerNotice();
     showTimeSlots();
     scrollToEl('calTimeSection');
   }
@@ -3145,13 +3182,15 @@ function submitBooking() {
     name: calTour,
     price: cartPrice,
     priceLabel: paymentTypeLabel,
+    priceLabelDisplay: (calPayment === 'deposit' ? 'Reserve — USD ' + depositAmt + ' deposit (balance due on the day)' : 'Pay in full — USD ' + fullAmt + ' (10% discount applied)'),
     paymentType: calPayment,
     date: dateLabel,
     time: timeLabel,
     group: group,
     guestName: name,
     guestEmail: email,
-    message: message
+    message: message,
+    partnerDates: isFlexible ? [] : partnerDatesFor(daysNeeded ? calSelectedDates : [calSelected])
   });
   updateCart();
 
@@ -3712,7 +3751,7 @@ var TOUR_CAROUSELS = {
       <button class="btn-checkout" style="background:var(--bg);color:var(--mid);border:1px solid var(--border);font-size:0.78rem;" onclick="closeCheckoutOptions()">&#8592; Back</button>
     </div>
     <p class="cart-note">Confirmation within 24h &middot; Card &middot; Wise &middot; Revolut</p>
-    <p class="cart-note" style="margin-top:0.35rem;font-size:0.68rem;color:var(--light);">Card payments charged in BRL at the rate shown. USD amount for reference.</p>
+    <p class="cart-note" style="margin-top:0.35rem;font-size:0.68rem;color:var(--light);">Card payments are processed by Stripe. At checkout you may be able to pay in your own currency. The USD amount here is for reference.</p>
   </div>
 </div>
 
@@ -3742,7 +3781,7 @@ var TOUR_CAROUSELS = {
 
       <div class="cal-legend">
         <span><span class="cal-legend-dot" style="background:var(--green)"></span>Available</span>
-        <span><span class="cal-legend-dot" style="background:#E5E3DE"></span>Blocked</span>
+        <span><span class="cal-legend-dot" style="background:#FBF3D6;border:1px solid #E3D7A8"></span>Partner guide may be assigned</span>
       </div>
 
       <div id="calTimeSection" style="display:none">
@@ -4120,15 +4159,24 @@ document.getElementById('getInTouchModal').addEventListener('click',function(e){
   function show(text) {
     var el = document.createElement('div');
     el.setAttribute('role', 'status');
-    el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;padding:14px 48px 14px 18px;background:#1B2F6E;color:#fff;font:500 15px/1.4 sans-serif;text-align:center;';
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:300;padding:14px 48px 14px 18px;background:#1B2F6E;color:#fff;font:500 15px/1.4 sans-serif;text-align:center;';
     el.textContent = text;
     var x = document.createElement('button');
     x.textContent = '\u00d7';
     x.setAttribute('aria-label', 'Close');
     x.style.cssText = 'position:absolute;right:12px;top:8px;background:none;border:0;color:#fff;font-size:24px;cursor:pointer;';
-    x.onclick = function() { el.remove(); };
     el.appendChild(x);
     document.body.appendChild(el);
+    // Push the fixed header and the page down while the message is visible.
+    var st = document.createElement('style');
+    function fit() {
+      var h = el.offsetHeight;
+      st.textContent = 'nav{top:' + (h + 4) + 'px !important}body{padding-top:' + h + 'px !important}';
+    }
+    document.head.appendChild(st);
+    fit();
+    window.addEventListener('resize', fit);
+    x.onclick = function() { el.remove(); st.remove(); window.removeEventListener('resize', fit); };
   }
   history.replaceState(null, '', window.location.pathname);
   if (state === 'cancelled') { show("Checkout cancelled. You can try again."); return; }
