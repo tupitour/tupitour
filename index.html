@@ -2999,7 +2999,7 @@ function showPartnerNotice() {
     grid.parentNode.insertBefore(msg, grid.nextSibling);
   }
   msg.style.display = '';
-  msg.innerHTML = '<strong>' + taken.map(fmtDay).join(', ') + '</strong>: Tupi Tour may assign a partner guide for this date. We will confirm who will lead your tour. You can book as usual.';
+  msg.innerHTML = '<strong>' + taken.map(fmtDay).join(', ') + '</strong>: Tupi Tour may assign a partner guide for ' + (taken.length > 1 ? 'these dates' : 'this date') + '. We will confirm who will lead your tour. You can book as usual.';
 }
 
 function selectDate(dateStr) {
