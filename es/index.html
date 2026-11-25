@@ -2896,6 +2896,8 @@ async function openCalendar(tourName) {
   calSelectedDates = [];
   calTime = null;
   calPayment = null;
+  var staleMsg = document.getElementById('calBlockedMsg');
+  if (staleMsg) staleMsg.style.display = 'none';
   var now = new Date();
   calYear = now.getFullYear();
   calMonth = now.getMonth();
@@ -3148,6 +3150,8 @@ function submitFlexible() {
   calSelected = 'Flexible';
   calTime = 'To be confirmed';
   calPayment = null;
+  var staleMsg = document.getElementById('calBlockedMsg');
+  if (staleMsg) staleMsg.style.display = 'none';
 
   // Hide time section
   document.getElementById('calTimeSection').style.display = 'none';
