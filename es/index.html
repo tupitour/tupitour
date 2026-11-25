@@ -2943,6 +2943,8 @@ async function openCalendar(tourName) {
   } else if (unEl) {
     unEl.style.display = 'none';
   }
+  var legendEl = document.getElementById('calLegend');
+  if (legendEl) legendEl.style.display = _blockedFailed ? 'none' : '';
   renderCalendar();
   document.getElementById('calOverlay').classList.add('open');
 }
@@ -3841,7 +3843,7 @@ var TOUR_CAROUSELS = {
 
       <div class="cal-grid" id="calGrid"></div>
 
-      <div class="cal-legend">
+      <div class="cal-legend" id="calLegend">
         <span><span class="cal-legend-dot" style="background:var(--green)"></span>Disponible</span>
         <span><span class="cal-legend-dot" style="background:#FBF3D6;border:1px solid #E3D7A8"></span>Puede asignarse un guía asociado</span>
       </div>
