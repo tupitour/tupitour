@@ -22,6 +22,19 @@ const TOUR_PRICES = {
   'Rafting': 250,
   'Petr\u00f3polis': 380
 };
+// Per-group price list of the site's tour panel (1 to 4 people). The deposit stays USD 30 x days;
+// the full payment keeps the 10% discount on the price of the chosen group size.
+const GROUP_PRICES = {
+  'Pantanal Carioca': { 1: 150, 2: 180, 3: 190, 4: 200 },
+  'Rafting': { 1: 250, 2: 270, 3: 410, 4: 430 }
+};
+// Tour price for the group size of an item (null when the tour has a per-group list and the size is not 1 to 4).
+function basePriceFor(name, group) {
+  const list = GROUP_PRICES[name];
+  if (!list) return TOUR_PRICES[name];
+  const n = /^[1-4]$/.test(String(group)) ? Number(group) : 0;
+  return n ? list[n] : null;
+}
 const MULTI_DAY_TOURS = {
   'City Tour Rio \u2014 3 days': 3,
   'City Tour Rio \u2014 5 days': 5
@@ -30,8 +43,8 @@ const MULTI_DAY_TOURS = {
 // Every booking in the site goes through the calendar, so an item is always
 // either the deposit (USD 30 x days) or the full amount (price x days x 0.9).
 // The undiscounted base price is not offered by any path and is rejected.
-function allowedPrices(name) {
-  const base = TOUR_PRICES[name];
+function allowedPrices(name, group) {
+  const base = basePriceFor(name, group);
   if (typeof base !== 'number') return null;
   const days = MULTI_DAY_TOURS[name] || 1;
   return { deposit: 30 * days, full: Math.round(base * days * 0.9) };
@@ -40,8 +53,9 @@ function allowedPrices(name) {
 function validateItems(items) {
   for (const item of items) {
     if (!item || typeof item.name !== 'string') return 'Invalid item';
-    const allowed = allowedPrices(item.name);
-    if (!allowed) return 'Unknown tour';
+    if (typeof TOUR_PRICES[item.name] !== 'number') return 'Unknown tour';
+    const allowed = allowedPrices(item.name, item.group);
+    if (!allowed) return 'Invalid group size';
     if (typeof item.price !== 'number' || !isFinite(item.price)) return 'Invalid price';
     if (item.paymentType === 'deposit') {
       if (item.price !== allowed.deposit) return 'Invalid price';
@@ -55,34 +69,6 @@ function validateItems(items) {
     }
   }
   return null;
-}
-
-// Block the booked dates in Supabase after the Stripe session is created.
-async function blockDateInSupabase(date, tourName, guestName) {
-  if (!date || date === 'Flexible dates (TBC)') return;
-  const dates = date.split(', ');
-  for (const d of dates) {
-    const clean = d.trim();
-    if (!clean.match(/^\d{4}-\d{2}-\d{2}$/)) continue;
-    try {
-      await fetch(SUPABASE_URL + '/rest/v1/blocked_dates', {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_SERVICE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({
-          date: clean,
-          note: tourName + (guestName ? ' — ' + guestName : ''),
-          source: 'stripe'
-        })
-      });
-    } catch(e) {
-      console.error('Supabase block error:', e.message);
-    }
-  }
 }
 
 // Stripe metadata values are limited to 500 characters.
@@ -122,40 +108,72 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: JSON.stringify({ error: 'No items in cart' }) };
   }
 
+  if (items.length > 30) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Too many items' }) };
+  }
+
   const priceError = validateItems(items);
   if (priceError) {
     return { statusCode: 400, body: JSON.stringify({ error: priceError }) };
   }
 
-  // The rate is fetched on the server. brlRate from the browser is ignored.
-  const rate = await getServerRate();
 
   // Return URLs are built on the server (the browser can no longer choose them).
   // The Spanish site returns to /es/, everything else to the home page.
-  const returnBase = 'https://tupitour.com' + (lang === 'es' ? '/es/' : '/');
+  // Netlify deploy previews of this site return to the preview itself so a test payment can be checked end to end.
+  // Any other host (production, custom domain, direct calls) returns to production.
+  const reqHost = String((event.headers && (event.headers['x-forwarded-host'] || event.headers.host)) || '').toLowerCase();
+  const siteBase = /^deploy-preview-\d+--tupitour\.netlify\.app$/.test(reqHost) ? 'https://' + reqHost : 'https://tupitour.com';
+  const returnBase = siteBase + (lang === 'es' ? '/es/' : '/');
 
   const lineItems = items.map(function(item) {
-    // item.price is always in USD (as stored in the cart).
-    // Convert to BRL, round to 2 decimal places, then to centavos (integer).
-    const brlAmount = Math.round(item.price * rate * 100); // centavos
+    // item.price is always in USD (as stored in the cart). The checkout is charged in USD exactly
+    // as advertised on the site (no BRL step, so no double conversion). Stripe settles to the BRL balance.
+    const usdCents = Math.round(item.price * 100);
+    // Checkout text in the site language (Spanish texts are a draft for the owner's review).
+    const es = lang === 'es';
+    const people = String(item.group) === '1' ? (es ? 'persona' : 'person') : (es ? 'personas' : 'people');
+    const payLabel = item.paymentType === 'deposit'
+      ? (es ? 'Reserva \u2014 anticipo de USD ' + item.price + ' (saldo el d\u00eda del tour)' : 'Reserve \u2014 USD ' + item.price + ' deposit (balance due on the day)')
+      : (item.paymentType === 'full'
+        ? (es ? 'Pago completo \u2014 USD ' + item.price + ' (10 % de descuento aplicado)' : 'Pay in full \u2014 USD ' + item.price + ' (10% discount applied)')
+        : (item.priceLabel || null));
 
     return {
       price_data: {
-        currency: 'brl',
+        currency: 'usd',
         product_data: {
           name: item.name,
           description: [
             item.date ? '📅 ' + item.date : null,
             item.time ? '🕐 ' + item.time : null,
-            item.group ? '👥 ' + item.group + ' people' : null,
-            item.priceLabel || null,
-            'USD ' + item.price + ' · Rate: 1 USD = R$ ' + rate.toFixed(2)
+            item.group ? '👥 ' + item.group + ' ' + people : null,
+            payLabel
           ].filter(Boolean).join('  ·  ')
         },
-        unit_amount: brlAmount
+        unit_amount: usdCents
       },
       quantity: 1
     };
+  });
+
+  // One metadata key per cart item, saved at checkout time (read by stripe-webhook.js).
+  // Dates that already have a block or hold in blocked_dates. The row's source is not
+  // interpreted (a hold is not treated as a paid booking); the flag only drives the partner-guide notice.
+  let blockedSet = null;
+  try {
+    const r = await fetch(SUPABASE_URL + '/rest/v1/blocked_dates?select=date', {
+      headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY }
+    });
+    if (r.ok) blockedSet = new Set((await r.json()).map(function(x) { return x.date; }));
+  } catch (e) { console.error('Blocked lookup error:', e.message); }
+
+  const itemMeta = {};
+  items.forEach(function(i, idx) {
+    const taken = blockedSet && i.date && i.date !== 'Flexible dates (TBC)'
+      ? i.date.split(',').map(function(s) { return s.trim(); }).filter(function(d) { return blockedSet.has(d); })
+      : [];
+    itemMeta['item_' + (idx + 1)] = metaText(JSON.stringify({ n: i.name, d: i.date || '', t: i.time || '', g: i.group || '', p: i.paymentType || '', u: i.price, l: i.priceLabel || '', pd: taken, lp: (basePriceFor(i.name, i.group) || 0) * (MULTI_DAY_TOURS[i.name] || 1) }));
   });
 
   try {
@@ -163,28 +181,30 @@ exports.handler = async function(event) {
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
+      // Hosted checkout page in the language chosen on the site.
+      locale: lang === 'es' ? 'es' : 'en',
+      // The price is already in the advertised currency: no local-currency conversion on top.
+      adaptive_pricing: { enabled: false },
       customer_email: guestEmail || undefined,
-      metadata: {
+      metadata: Object.assign({}, itemMeta, {
+        item_count: String(items.length),
         guest_name: guestName || '',
         guest_email: guestEmail || '',
+        // Site language of the order (the confirmation email follows it).
+        lang: lang === 'es' ? 'es' : 'en',
         tours: items.map(function(i) { return i.name; }).join(', '),
         dates: items.map(function(i) { return i.date || ''; }).join(' | '),
-        usd_rate: String(rate),
         // Keys the confirmation emails read (stripe-webhook.js).
         tour_name: metaText(items.map(function(i) { return i.name; }).join(', ')),
         tour_date: metaText(items.map(function(i) { return i.date || ''; }).join(' | ')),
         group_size: metaText(items.map(function(i) { return i.group || ''; }).join(' | ')),
         payment_type: metaText(items.map(function(i) { return i.paymentType || ''; }).join(', '))
-      },
+      }),
       success_url: returnBase + '?payment=success&session_id={CHECKOUT_SESSION_ID}',
       cancel_url: returnBase + '?payment=cancelled',
     });
 
-    for (const item of items) {
-      if (item.date && item.date !== 'Flexible dates (TBC)') {
-        await blockDateInSupabase(item.date, item.name, guestName);
-      }
-    }
+    // Dates are blocked by stripe-webhook.js only after the payment is confirmed (not here, before paying).
 
     return {
       statusCode: 200,
@@ -200,4 +220,4 @@ exports.handler = async function(event) {
   }
 };
 
-exports._test = { validateItems, allowedPrices };
+exports._test = { validateItems, allowedPrices, basePriceFor };
