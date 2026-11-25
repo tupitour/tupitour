@@ -2756,17 +2756,22 @@ cards.forEach(function(card, i) {
 // ── BLOCKED DATES (Supabase) ──
 var _blockedCache = null;
 var _blockedLoaded = false;
+var _blockedFailed = false;
 
 async function fetchBlockedDates() {
   if (_blockedLoaded) return _blockedCache;
   try {
     var res = await fetch('/.netlify/functions/blocked-dates');
     var data = await res.json();
-    _blockedCache = Array.isArray(data) ? data : [];
+    if (!res.ok || !Array.isArray(data)) throw new Error('blocked-dates unavailable');
+    _blockedCache = data;
+    _blockedFailed = false;
+    _blockedLoaded = true;
   } catch(e) {
+    // Do not cache a failed lookup: retry on the next calendar open. The calendar shows an availability notice.
     _blockedCache = [];
+    _blockedFailed = true;
   }
-  _blockedLoaded = true;
   return _blockedCache;
 }
 
@@ -2898,6 +2903,8 @@ async function openCalendar(tourName) {
   calPayment = null;
   var staleMsg = document.getElementById('calBlockedMsg');
   if (staleMsg) staleMsg.style.display = 'none';
+  var grpEl = document.getElementById('calGroup');
+  if (grpEl) grpEl.value = '1';
   var now = new Date();
   calYear = now.getFullYear();
   calMonth = now.getMonth();
@@ -2922,6 +2929,20 @@ async function openCalendar(tourName) {
 
   // Fetch blocked dates from Supabase before rendering
   await fetchBlockedDates();
+  var unEl = document.getElementById('calUnavailMsg');
+  if (_blockedFailed) {
+    if (!unEl) {
+      unEl = document.createElement('div');
+      unEl.id = 'calUnavailMsg';
+      unEl.style.cssText = 'margin:0.75rem 0 0;padding:0.75rem 1rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:0.82rem;color:var(--mid);line-height:1.5;';
+      var gridEl = document.getElementById('calGrid');
+      gridEl.parentNode.insertBefore(unEl, gridEl.nextSibling);
+    }
+    unEl.textContent = "We could not check date availability right now. You can still choose a date: Tupi Tour will confirm availability and who will lead your tour.";
+    unEl.style.display = '';
+  } else if (unEl) {
+    unEl.style.display = 'none';
+  }
   renderCalendar();
   document.getElementById('calOverlay').classList.add('open');
 }
