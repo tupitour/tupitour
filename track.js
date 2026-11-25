@@ -11,7 +11,11 @@
     var a = e.target && e.target.closest ? e.target.closest('a[href*="wa.me"]') : null;
     if (a) { send('whatsapp_click'); return; }
     var b = e.target && e.target.closest ? e.target.closest('a[data-cta="book"]') : null;
-    if (b) send('book_cta_click');
+    if (b) { send('book_cta_click'); return; }
+    var f = e.target && e.target.closest ? e.target.closest('a[data-cta="form"]') : null;
+    if (f) { send('form_cta_click'); return; }
+    var m = e.target && e.target.closest ? e.target.closest('a[data-cta="email"]') : null;
+    if (m) send('email_cta_click');
   }, true);
   var wo = window.open;
   window.open = function (u) {
