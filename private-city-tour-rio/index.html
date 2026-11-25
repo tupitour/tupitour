@@ -52,15 +52,21 @@ summary{cursor:pointer;font-weight:500}details p{margin:.6rem 0 0}
 .more{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1.2rem;margin-top:2rem}
 .more a{color:var(--green)}
 footer{text-align:center;padding:1.5rem;color:var(--mid);font-size:.85rem}footer a{color:var(--mid)}
-.fab{position:fixed;right:16px;bottom:16px;background:#25D366;color:#fff;border-radius:999px;padding:.8rem 1.2rem;text-decoration:none;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,.25)}</style>
+.fab{position:fixed;right:16px;bottom:16px;background:#25D366;color:#fff;border-radius:999px;padding:.8rem 1.2rem;text-decoration:none;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,.25)}header a.logo{display:block;height:68px;overflow:hidden}
+header a.logo img{height:128px;width:auto;display:block;margin-top:-29px}@media(min-width:700px){.qbar{justify-content:center}.qbar a{flex:0 1 220px}}
+.cta .btn.m{background:var(--white);border:1px solid var(--green);color:var(--green)}
+.qbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:.5rem;padding:.6rem .8rem calc(.6rem + env(safe-area-inset-bottom));background:var(--white);border-top:1px solid var(--border);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+.qbar a{flex:1;text-align:center;padding:.7rem .4rem;border-radius:8px;text-decoration:none;font-weight:500;font-size:.95rem;border:1px solid var(--green);color:var(--green);background:var(--white)}
+.qbar a.w{background:#25D366;border-color:#25D366;color:#fff}
+body{padding-bottom:76px}</style>
 </head>
 <body>
 <div class="bar"></div>
-<header><a class="logo" href="/">Tupi Tour</a><a class="back" href="/#tours">All Rio tours →</a></header>
+<header><a class="logo" href="/" aria-label="Tupi Tour"><img src="/imgs/logo.png" alt="Tupi Tour" width="128" height="128"></a><a class="back" href="/#tours">All Rio tours →</a></header>
 <section class="hero"><img src="/imgs/corcovado-sunrise-sugar-loaf-botafogo-bay-orange-sky-rio.jpg" alt="Sunrise over Sugarloaf and Botafogo Bay seen from Corcovado, Rio de Janeiro" fetchpriority="high"><div class="in"><h1>Private City Tour in Rio de Janeiro</h1><p>Rio in one day, built around what moves you. Not a bus tour, not a fixed itinerary.</p></div></section>
 <main>
 <div class="facts"><div><b>Price</b>USD 280 per group</div><div><b>Duration</b>6 hours</div><div><b>Group</b>Up to 4 people</div><div><b>Pick-up</b>Anywhere in Rio</div></div>
-<div class="cta"><a class="btn g" data-cta="book" href="/?tour=city-tour-rio">Check dates and book</a><a class="btn w" data-cta="whatsapp" href="https://wa.me/5521988042225?text=Hi!%20I%20would%20like%20to%20plan%20a%20private%20city%20tour%20in%20Rio." target="_blank" rel="noopener">Chat on WhatsApp</a></div>
+<div class="cta"><a class="btn g" data-cta="book" href="/?tour=city-tour-rio">Check dates and book</a><a class="btn w" data-cta="whatsapp" href="https://wa.me/5521988042225?text=Hi!%20I%20would%20like%20to%20plan%20a%20private%20city%20tour%20in%20Rio." target="_blank" rel="noopener">Chat on WhatsApp</a><a class="btn m" data-cta="form" href="/#contact">Send a request on our form</a><a class="btn m" data-cta="email" href="mailto:flavio@tupitour.com?subject=Quote%20request%20-%20Tupi%20Tour">Email us</a></div>
 <h2>One day, your Rio</h2>
 <p>This is a fully customized private tour. You tell us what interests you and we build the day around it. In 6 hours we pick the best mix from Rio's iconic and hidden places.</p>
 <h2>Places you can choose from</h2>
@@ -74,11 +80,11 @@ footer{text-align:center;padding:1.5rem;color:var(--mid);font-size:.85rem}footer
 <p>With more days, we build a real journey. The 3-day and 5-day city tour packages are on the <a href="/#tours">tours page</a>. You can also combine this tour with the <a href="/food-tour-rio/">Food Tour</a>, Tijuca Forest, Coast to Coast and others.</p>
 <h2>Frequently asked questions</h2>
 <details><summary>How much is a private city tour in Rio?</summary><p>The City Tour Rio is USD 280 per private group of up to 4 people, for 6 hours.</p></details><details><summary>Does the price include the Christ the Redeemer and Sugarloaf tickets?</summary><p>No. Attraction tickets are not included.</p></details><details><summary>Can we choose what to see?</summary><p>Yes. The itinerary is built around your interests from the places listed above and others.</p></details><details><summary>Where do you pick us up?</summary><p>Anywhere in Rio, including hotels and Airbnbs.</p></details><details><summary>Is there a multi-day option?</summary><p>Yes, a 3-day and a 5-day city tour package are available on the tours page.</p></details>
-<div class="cta"><a class="btn g" data-cta="book" href="/?tour=city-tour-rio">Check dates and book</a><a class="btn w" data-cta="whatsapp" href="https://wa.me/5521988042225?text=Hi!%20I%20would%20like%20to%20plan%20a%20private%20city%20tour%20in%20Rio." target="_blank" rel="noopener">Chat on WhatsApp</a></div>
+<div class="cta"><a class="btn g" data-cta="book" href="/?tour=city-tour-rio">Check dates and book</a><a class="btn w" data-cta="whatsapp" href="https://wa.me/5521988042225?text=Hi!%20I%20would%20like%20to%20plan%20a%20private%20city%20tour%20in%20Rio." target="_blank" rel="noopener">Chat on WhatsApp</a><a class="btn m" data-cta="form" href="/#contact">Send a request on our form</a><a class="btn m" data-cta="email" href="mailto:flavio@tupitour.com?subject=Quote%20request%20-%20Tupi%20Tour">Email us</a></div>
 <div class="more"><b>More private tours in Rio</b><br><a href="/food-tour-rio/">Food Tour Rio</a> · <a href="/private-city-tour-rio/">Private City Tour Rio</a> · <a href="/rio-shore-excursions/">Rio Shore Excursions for Cruise Passengers</a> · <a href="/blog/things-to-do-rio-de-janeiro.html">Things to do in Rio</a> · <a href="/#tours">All tours</a></div>
 </main>
 <footer>© Tupi Tour · Cadastur certified · <a href="/">tupitour.com</a></footer>
-<a class="fab" data-cta="whatsapp" href="https://wa.me/5521988042225?text=Hi!%20I%20would%20like%20to%20plan%20a%20private%20city%20tour%20in%20Rio." target="_blank" rel="noopener">WhatsApp</a>
+<nav class="qbar" aria-label="Contact"><a class="w" data-cta="whatsapp" href="https://wa.me/5521988042225?text=Hi!%20I%20would%20like%20to%20plan%20a%20private%20city%20tour%20in%20Rio." target="_blank" rel="noopener">WhatsApp</a><a data-cta="form" href="/#contact">Request</a><a data-cta="email" href="mailto:flavio@tupitour.com?subject=Quote%20request%20-%20Tupi%20Tour">Email</a></nav>
 <script src="/track.js" defer></script>
 </body>
 </html>

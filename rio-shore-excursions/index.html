@@ -52,15 +52,21 @@ summary{cursor:pointer;font-weight:500}details p{margin:.6rem 0 0}
 .more{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1.2rem;margin-top:2rem}
 .more a{color:var(--green)}
 footer{text-align:center;padding:1.5rem;color:var(--mid);font-size:.85rem}footer a{color:var(--mid)}
-.fab{position:fixed;right:16px;bottom:16px;background:#25D366;color:#fff;border-radius:999px;padding:.8rem 1.2rem;text-decoration:none;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,.25)}</style>
+.fab{position:fixed;right:16px;bottom:16px;background:#25D366;color:#fff;border-radius:999px;padding:.8rem 1.2rem;text-decoration:none;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,.25)}header a.logo{display:block;height:68px;overflow:hidden}
+header a.logo img{height:128px;width:auto;display:block;margin-top:-29px}@media(min-width:700px){.qbar{justify-content:center}.qbar a{flex:0 1 220px}}
+.cta .btn.m{background:var(--white);border:1px solid var(--green);color:var(--green)}
+.qbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:.5rem;padding:.6rem .8rem calc(.6rem + env(safe-area-inset-bottom));background:var(--white);border-top:1px solid var(--border);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+.qbar a{flex:1;text-align:center;padding:.7rem .4rem;border-radius:8px;text-decoration:none;font-weight:500;font-size:.95rem;border:1px solid var(--green);color:var(--green);background:var(--white)}
+.qbar a.w{background:#25D366;border-color:#25D366;color:#fff}
+body{padding-bottom:76px}</style>
 </head>
 <body>
 <div class="bar"></div>
-<header><a class="logo" href="/">Tupi Tour</a><a class="back" href="/#tours">All Rio tours →</a></header>
+<header><a class="logo" href="/" aria-label="Tupi Tour"><img src="/imgs/logo.png" alt="Tupi Tour" width="128" height="128"></a><a class="back" href="/#tours">All Rio tours →</a></header>
 <section class="hero"><img src="/imgs/flamengo-beach-aerial-sugar-loaf-rio-de-janeiro.jpg" alt="Aerial view of Flamengo Beach and Sugarloaf Mountain in Rio de Janeiro" fetchpriority="high"><div class="in"><h1>Private Shore Excursions in Rio de Janeiro for Cruise Passengers</h1><p>A day in port built around you and your ship&#x27;s schedule, with a certified local guide.</p></div></section>
 <main>
 <div class="facts"><div><b>Format</b>Private, your group only</div><div><b>Planning</b>Around your ship&#x27;s schedule</div><div><b>Details</b>Confirmed in your quote</div><div><b>Price</b>Ask for a quote</div></div>
-<div class="cta"><a class="btn w" data-cta="whatsapp" href="https://wa.me/5521988042225?text=Hi!%20I%20am%20arriving%20in%20Rio%20on%20a%20cruise%20and%20would%20like%20a%20private%20shore%20excursion.%20Ship:%20___%20Date:%20___%20All-aboard%20time:%20___%20People:%20___" target="_blank" rel="noopener">Ask for a quote on WhatsApp</a></div>
+<div class="cta"><a class="btn w" data-cta="whatsapp" href="https://wa.me/5521988042225?text=Hi!%20I%20am%20arriving%20in%20Rio%20on%20a%20cruise%20and%20would%20like%20a%20private%20shore%20excursion.%20Ship:%20___%20Date:%20___%20All-aboard%20time:%20___%20People:%20___" target="_blank" rel="noopener">Ask for a quote on WhatsApp</a><a class="btn m" data-cta="form" href="/#contact">Send a request on our form</a><a class="btn m" data-cta="email" href="mailto:flavio@tupitour.com?subject=Quote%20request%20-%20Tupi%20Tour">Email us</a></div>
 <h2>A private day in Rio between ship calls</h2>
 <p>A cruise day in Rio is short. A private tour lets you spend it on what you actually want to see, at your own pace, with a local guide who knows the city.</p>
 <p>Send us your ship, date, the time you are on shore, the official all-aboard time and the number of people. We plan the route around those times and reply with a proposal.</p>
@@ -75,11 +81,11 @@ footer{text-align:center;padding:1.5rem;color:var(--mid);font-size:.85rem}footer
 <p>Message us on WhatsApp or the contact form on the <a href="/#contact">home page</a> with: ship name, date, time you are on shore, all-aboard time, and number of people.</p>
 <h2>Frequently asked questions</h2>
 <details><summary>Can I book a private tour on my cruise day in Rio?</summary><p>Yes. Send us your ship, date, time on shore, all-aboard time and group size, and we reply with a proposal.</p></details><details><summary>How much does a private shore excursion cost?</summary><p>It depends on your schedule and group. For reference, our regular private City Tour Rio is USD 280 per group of up to 4 people for 6 hours. Ask us for a quote for your day.</p></details><details><summary>Do you pick up at the cruise port?</summary><p>Tell us your ship and arrival details when you ask for a quote, and we confirm the pick-up arrangement in the proposal.</p></details><details><summary>Are attraction tickets included?</summary><p>In our regular City Tour Rio, attraction tickets such as Christ the Redeemer and Sugarloaf are not included. We confirm what applies to your day in the quote.</p></details><details><summary>What information do you need from me?</summary><p>Ship name, date, time you are on shore, the official all-aboard time and the number of people.</p></details>
-<div class="cta"><a class="btn w" data-cta="whatsapp" href="https://wa.me/5521988042225?text=Hi!%20I%20am%20arriving%20in%20Rio%20on%20a%20cruise%20and%20would%20like%20a%20private%20shore%20excursion.%20Ship:%20___%20Date:%20___%20All-aboard%20time:%20___%20People:%20___" target="_blank" rel="noopener">Ask for a quote on WhatsApp</a></div>
+<div class="cta"><a class="btn w" data-cta="whatsapp" href="https://wa.me/5521988042225?text=Hi!%20I%20am%20arriving%20in%20Rio%20on%20a%20cruise%20and%20would%20like%20a%20private%20shore%20excursion.%20Ship:%20___%20Date:%20___%20All-aboard%20time:%20___%20People:%20___" target="_blank" rel="noopener">Ask for a quote on WhatsApp</a><a class="btn m" data-cta="form" href="/#contact">Send a request on our form</a><a class="btn m" data-cta="email" href="mailto:flavio@tupitour.com?subject=Quote%20request%20-%20Tupi%20Tour">Email us</a></div>
 <div class="more"><b>More private tours in Rio</b><br><a href="/food-tour-rio/">Food Tour Rio</a> · <a href="/private-city-tour-rio/">Private City Tour Rio</a> · <a href="/rio-shore-excursions/">Rio Shore Excursions for Cruise Passengers</a> · <a href="/blog/things-to-do-rio-de-janeiro.html">Things to do in Rio</a> · <a href="/#tours">All tours</a></div>
 </main>
 <footer>© Tupi Tour · Cadastur certified · <a href="/">tupitour.com</a></footer>
-<a class="fab" data-cta="whatsapp" href="https://wa.me/5521988042225?text=Hi!%20I%20am%20arriving%20in%20Rio%20on%20a%20cruise%20and%20would%20like%20a%20private%20shore%20excursion.%20Ship:%20___%20Date:%20___%20All-aboard%20time:%20___%20People:%20___" target="_blank" rel="noopener">WhatsApp</a>
+<nav class="qbar" aria-label="Contact"><a class="w" data-cta="whatsapp" href="https://wa.me/5521988042225?text=Hi!%20I%20am%20arriving%20in%20Rio%20on%20a%20cruise%20and%20would%20like%20a%20private%20shore%20excursion.%20Ship:%20___%20Date:%20___%20All-aboard%20time:%20___%20People:%20___" target="_blank" rel="noopener">WhatsApp</a><a data-cta="form" href="/#contact">Request</a><a data-cta="email" href="mailto:flavio@tupitour.com?subject=Quote%20request%20-%20Tupi%20Tour">Email</a></nav>
 <script src="/track.js" defer></script>
 </body>
 </html>
