@@ -100,7 +100,16 @@
     box.appendChild(p);
     box.appendChild(row);
     document.body.appendChild(box);
+    place();
   }
+  // Keep the notice above any fixed contact bar so neither hides the other.
+  function place() {
+    if (!box) return;
+    var q = document.querySelector('.qbar'), h = 0;
+    if (q && getComputedStyle(q).position === 'fixed') h = q.offsetHeight;
+    box.style.bottom = h + 'px';
+  }
+  window.addEventListener('resize', place);
 
   function footerLink() {
     var f = document.querySelector('footer');
