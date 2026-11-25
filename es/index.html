@@ -1986,6 +1986,9 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
     <li><a href="#tours">Tours en Río</a></li>
     <li><a href="#destinations">Brasil</a></li>
     <li><a href="/es/blog.html">Blog</a></li>
+    <li><a href="/es/food-tour-rio/">Food Tour Río</a></li>
+    <li><a href="/es/private-city-tour-rio/">City Tour Privado</a></li>
+    <li><a href="/es/rio-shore-excursions/">Cruceros</a></li>
     <li><a href="../">English</a></li>
     <li><a href="#about">Nosotros</a></li>
     <li><a href="#contact">Contacto</a></li>
@@ -2253,11 +2256,12 @@ var TOUR_PHOTOS = {
   "Private Transfer": { srcs:["../imgs/christ-redeemer-close-up-rio-de-janeiro.jpg","../imgs/botafogo-bay-sunset-christ-redeemer-silhouette.jpg","/.netlify/images?url=/imgs/christ-redeemer-aerial-view-rio-de-janeiro.jpg&w=1600","/.netlify/images?url=/imgs/copacabana-boardwalk-aerial-mosaic-rio.jpg&w=1600","/.netlify/images?url=/imgs/sugar-loaf-mountain-sunrise-fog-rio-de-janeiro.jpg&w=1600","/.netlify/images?url=/imgs/theatro-municipal-aerial-view-rio-de-janeiro.jpg&w=1600","../imgs/real-gabinete-portugues-leitura-interior-rio.jpg"], alts:["Christ the Redeemer close up blue sky Rio de Janeiro","Botafogo Bay sunset Christ the Redeemer silhouette Rio de Janeiro","Christ the Redeemer aerial view Corcovado Rio de Janeiro","Copacabana boardwalk mosaic aerial view Rio de Janeiro","Sugar Loaf mountain sunrise fog Rio de Janeiro","Theatro Municipal aerial view Rio de Janeiro","Real Gabinete Portugues de Leitura interior Rio de Janeiro"] },
 };
 
+function esTxt(s){return String(s||'').replace('per group / per day','por grupo / por día').replace('per group','por grupo').replace('Up to','Hasta').replace('1 to 4','1 a 4').replace('Per persona','Por persona').replace('hours/day','horas/día').replace(' days',' días').replace('hours','horas').replace('hour','hora').replace('Any size','Cualquier tamaño').replace('Any tour','Cualquier tour').replace('You decide','Tú decides').replace('Depends on destination','Según el destino').replace('Full day or overnight','Día completo o con pernocte').replace('Varies by fixture','Según el partido').replace('(Rio) or','(Río) o').replace('5 or more','5 o más');}
 function openPanel(name) {
   var t = tours[name];
   if (!t) return;
 
-  document.getElementById('panelCat').textContent = t.duration + (t.group ? ' · ' + t.group : '');
+  document.getElementById('panelCat').textContent = esTxt(t.duration) + (t.group ? ' · ' + esTxt(t.group) : '');
   document.getElementById('panelTitle').textContent = name;
 
   var bodyHtml = '<p class="panel-desc">' + t.desc + '</p>';
@@ -2299,7 +2303,7 @@ function openPanel(name) {
 
   var footerHtml = '';
   if (t.type === 'cart') {
-    footerHtml += '<div class="panel-price-display">Desde <strong>' + t.priceLabel + '</strong></div>';
+    footerHtml += '<div class="panel-price-display">Desde <strong>' + esTxt(t.priceLabel) + '</strong></div>';
     footerHtml += '<button class="btn-add-cart" id="addCartBtn">Seleccionar fecha y reservar</button>';
     footerHtml += '<button class="btn-contact-form" id="toggleFormBtn">Háblanos</button>';
     footerHtml += '<button class="btn-close-panel" onclick="closePanel()">Cerrar</button>';
