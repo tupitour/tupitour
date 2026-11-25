@@ -396,6 +396,49 @@ function supabaseStore(env, fetchImpl) {
   };
 }
 
+function withHoldWarning(html, hold) {
+  if (!hold || !hold.failed.length) return html;
+  const warn = '<div style="background:#fff3cd;border:1px solid #e0a800;padding:10px 14px;margin:0 0 12px;font:14px Arial,sans-serif;color:#5c4400"><strong>Date block NOT recorded</strong> for ' + esc(hold.failed.join(', ')) + '. Automatic retry is pending; if it is not resolved, check blocked_dates and add the date by hand.</div>';
+  return /<body[^>]*>/i.test(html) ? html.replace(/(<body[^>]*>)/i, '$1' + warn) : warn + html;
+}
+
+// Date hold, written only after a confirmed payment. One row per booked day in public.blocked_dates
+// (UNIQUE(date)): an already blocked day is not an error and never stops the sale (it stays informational,
+// as the partner-guide notice). Idempotent, so a Stripe retry can repeat it safely.
+// Result: { done: [dates newly blocked], already: [dates that were already blocked], failed: [dates not recorded] }.
+async function writeHolds(items, session, clientName, env, fetchImpl) {
+  const f = fetchImpl || fetch;
+  const out = { done: [], already: [], failed: [] };
+  const base = String(env.SUPABASE_URL || '').replace(/\/+$/, '') + '/rest/v1/blocked_dates?on_conflict=date';
+  const key = env.SUPABASE_SERVICE_KEY;
+  const seen = {};
+  for (const it of (items || [])) {
+    const raw = it && typeof it.d === 'string' ? it.d : '';
+    if (!raw || raw === 'Flexible dates (TBC)') continue;
+    for (const part of raw.split(',')) {
+      const d = part.trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || seen[d]) continue;
+      seen[d] = true;
+      try {
+        if (!env.SUPABASE_URL || !key) throw new Error('store_not_configured');
+        const res = await f(base, {
+          method: 'POST',
+          headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=representation' },
+          body: JSON.stringify({ date: d, note: String(it.n || 'Tour') + ' \u2014 ' + clientName + ' \u2014 ' + session.id, source: 'stripe' }),
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!res.ok) throw new Error('hold_http_' + res.status);
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows.length >= 1) out.done.push(d); else out.already.push(d);
+      } catch (e) {
+        out.failed.push(d);
+        console.error('HOLD_WRITE_FAILED date=' + d + ' session=' + session.id + ' why=' + String(e && e.message || e).slice(0, 60));
+      }
+    }
+  }
+  return out;
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -428,6 +471,11 @@ exports.handler = async (event) => {
   }
 
   const session = stripeEvent.data.object;
+  // A completed session that is not paid yet (asynchronous method) sends no confirmation and blocks no date.
+  if (session.payment_status !== 'paid') {
+    console.log('checkout.session.completed not paid yet (' + session.payment_status + '): no email, no hold, session=' + session.id);
+    return { statusCode: 200, body: JSON.stringify({ received: true, session_id: session.id, ignored: 'payment_not_paid', payment_status: session.payment_status || null }) };
+  }
   const clientEmail = session.customer_details?.email;
   const clientName  = session.customer_details?.name || 'Valued Guest';
   const tourName    = session.metadata?.tour_name || session.metadata?.tours || 'Tupi Tour Experience';
@@ -507,6 +555,13 @@ exports.handler = async (event) => {
     return { ok: false, why: out.why };
   }
 
+  // 0. Date hold (only for a paid order; in test mode only for an allowed order). Before the emails, so the
+  // admin notice can say when it failed. A failure never blocks the emails; it makes the answer 500 at the end,
+  // so Stripe retries the event: the retry repeats only the hold (emails are guarded by sendOnce).
+  let hold = { done: [], already: [], failed: [] };
+  if (orderAllowed) hold = await writeHolds(readItems(session), session, clientName, process.env);
+  else console.log('Test mode: date hold not written (order not from an allowed address)');
+
   // 1. Recibo ao cliente
   if (clientEmail) {
     const r1 = await send('receipt', {
@@ -528,13 +583,14 @@ exports.handler = async (event) => {
     to:   ADMIN_EMAIL,
     replyTo: clientEmail || ADMIN_EMAIL,
     subject: `🎉 New booking: ${tourName} — ${clientName}`,
-    html: buildAdminNotificationHtml(session, lines, bt),
+    html: withHoldWarning(buildAdminNotificationHtml(session, lines, bt), hold),
   });
   if (!r2.ok) {
     console.error('Admin notification not sent:', r2.why);
     errors.push('admin_notification_failed'); details.admin = r2.why;
   }
 
+  if (hold.failed.length) { errors.push('hold_write_failed'); details.hold = hold.failed.join(','); }
   if (errors.length) {
     return { statusCode: 500, body: JSON.stringify({ received: true, session_id: session.id, errors: errors, details: details, retry: true, skipped: skipped.length ? skipped : undefined }) };
   }
@@ -544,9 +600,12 @@ exports.handler = async (event) => {
     body: JSON.stringify({
       received: true,
       session_id: session.id,
+      hold: { blocked: hold.done, already_blocked: hold.already },
       errors: errors.length ? errors : undefined,
       skipped: skipped.length ? 'not_allowlisted:' + skipped.join(',') : undefined,
     }),
   };
 };
 
+
+exports._test = { writeHolds, withHoldWarning };
