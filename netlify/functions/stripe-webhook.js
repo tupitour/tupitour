@@ -314,6 +314,88 @@ ${String(session.currency).toLowerCase() === 'usd' ? '<tr><td colspan="2" style=
 }
 
 // ── Handler principal ──────────────────────────────────────────────────────
+// Durable once-per-(session,kind) send guard. Store = atomic row ops (Supabase REST in production).
+// Guarantee: never sends a second time after a confirmed send; never sends without a stored claim.
+// NOT exactly-once: see LIMITS in the report.
+const LEASE_MS = 2 * 60 * 1000;          // an attempt older than this is presumed dead
+const IDEM_MS  = 23 * 60 * 60 * 1000;    // stay 1 h inside Resend's 24 h idempotency window
+
+// store.insert(row)            -> true if inserted, false if the key exists (atomic, unique key)
+// store.get(sid, kind)         -> row | null
+// store.cas(sid, kind, where, set) -> true if exactly one row matched `where` and was updated
+async function sendOnce(store, kind, sid, transport, now = Date.now()) {
+  let claimedHere = false;
+  const t = new Date(now).toISOString();
+  try {
+    if (await store.insert({ session_id: sid, kind, status: 'claimed', first_claim: t, claimed_at: t, attempts: 1 })) {
+      claimedHere = true;
+    } else {
+      const row = await store.get(sid, kind);
+      if (!row) return { action: 'retry', why: 'row_vanished' };
+      if (row.status === 'sent') return { action: 'skip', why: 'already_sent' };
+      if (row.status === 'review') return { action: 'skip', why: 'needs_review' };
+      const age = now - Date.parse(row.first_claim);
+      const lease = now - Date.parse(row.claimed_at);
+      if (row.status === 'failed') {
+        // definite earlier failure: nothing was sent. Safe to retry; also safe after 24 h.
+        claimedHere = await store.cas(sid, kind, { status: 'failed', attempts: row.attempts },
+          { status: 'claimed', claimed_at: t, attempts: row.attempts + 1 });
+        if (!claimedHere) return { action: 'retry', why: 'lost_reclaim_race' };
+      } else { // claimed: another worker is running, or died, or its outcome is unknown
+        if (lease < LEASE_MS) return { action: 'retry', why: 'in_flight' };
+        if (age >= IDEM_MS) {
+          // outcome unknown and Resend can no longer dedupe: refuse to risk a duplicate.
+          await store.cas(sid, kind, { status: 'claimed', claimed_at: row.claimed_at }, { status: 'review', note: 'unknown outcome after 24h' });
+          return { action: 'skip', why: 'unknown_outcome_after_24h' };
+        }
+        // unknown outcome, still inside the window: same Idempotency-Key makes the resend safe
+        claimedHere = await store.cas(sid, kind, { status: 'claimed', claimed_at: row.claimed_at },
+          { claimed_at: t, attempts: row.attempts + 1 });
+        if (!claimedHere) return { action: 'retry', why: 'lost_reclaim_race' };
+      }
+    }
+  } catch (e) { return { action: 'retry', why: 'store_error_nothing_sent' }; }   // fail closed
+
+  let res;
+  try { res = await transport.send(kind + '/' + sid); } catch (e) { res = { unknown: true }; }
+  if (res.unknown) return { action: 'retry', why: 'send_outcome_unknown' };       // row stays claimed
+  try {
+    if (res.ok) await store.cas(sid, kind, { status: 'claimed' }, { status: 'sent', resend_id: res.id });
+    else await store.cas(sid, kind, { status: 'claimed' }, { status: 'failed', note: res.why });
+  } catch (e) { return { action: res.ok ? 'sent_unmarked' : 'retry', why: 'mark_failed', id: res.id }; }
+  return res.ok ? { action: 'sent', id: res.id } : { action: 'retry', why: res.why };
+}
+
+// Supabase REST adapter (PostgREST). Atomicity comes from the table primary key (insert) and from
+// filtered PATCH (compare-and-set): the filter and the update are one SQL statement.
+function supabaseStore(env, fetchImpl) {
+  const f = fetchImpl || fetch;
+  const base = String(env.SUPABASE_URL || '').replace(/\/+$/, '') + '/rest/v1/email_sends';
+  const key = env.SUPABASE_SERVICE_KEY;
+  if (!env.SUPABASE_URL || !key) { return { async insert() { throw new Error('store_not_configured'); }, async get() { throw new Error('store_not_configured'); }, async cas() { throw new Error('store_not_configured'); } }; }
+  const H = (extra) => Object.assign({ apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' }, extra || {});
+  async function call(url, init) {
+    const res = await f(url, Object.assign({ signal: AbortSignal.timeout(5000) }, init));
+    if (!res.ok) throw new Error('store_http_' + res.status);
+    return res.json();
+  }
+  const q = (o) => Object.keys(o).map((k) => k + '=eq.' + encodeURIComponent(o[k])).join('&');
+  return {
+    async insert(row) {
+      const out = await call(base + '?on_conflict=session_id,kind', { method: 'POST', headers: H({ Prefer: 'resolution=ignore-duplicates,return=representation' }), body: JSON.stringify(row) });
+      return Array.isArray(out) && out.length === 1;
+    },
+    async get(sid, kind) {
+      const out = await call(base + '?select=*&' + q({ session_id: sid, kind }), { method: 'GET', headers: H() });
+      return Array.isArray(out) && out[0] ? out[0] : null;
+    },
+    async cas(sid, kind, where, set) {
+      const out = await call(base + '?' + q(Object.assign({ session_id: sid, kind }, where)), { method: 'PATCH', headers: H({ Prefer: 'return=representation' }), body: JSON.stringify(set) });
+      return Array.isArray(out) && out.length === 1;
+    },
+  };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -371,13 +453,12 @@ exports.handler = async (event) => {
     console.error('Line items error:', err.message);
   }
 
-  // Sending goes straight to Resend's HTTP API so each email carries an Idempotency-Key
-  // (the installed SDK, resend 3.x, has no field for it). Same key within 24 h: Resend answers
-  // the same result and does not send again. Keys: one per email kind and checkout session.
-  // Any failure answers 500 so Stripe retries; inside the 24 h window a retry cannot resend an
-  // email that already went out. Limits: live-mode Stripe retries run up to 3 days, so a retry
-  // after 24 h can repeat an email; a request whose answer was lost is only protected if Resend
-  // had stored the key; this does not prove delivery to the inbox.
+  // Sending goes straight to Resend's HTTP API, once per (checkout session, email kind), guarded by the
+  // table public.email_sends (see sendOnce). Resend's 24 h Idempotency-Key is kept as a second layer.
+  // Guarantees: no second send after a recorded send; no send without a stored claim; no send when the
+  // store is unreachable (answers 500, Stripe retries). Not exactly-once: if the outcome of a send is
+  // unknown and more than 23 h pass, nothing is resent and the row becomes 'review' (answers 500 and
+  // logs EMAIL_NEEDS_REVIEW; query public.email_sends_attention). A missing email is never silent.
   // Test-mode guard (fail closed). Stripe's signed event says livemode=false for sandbox events
   // In test mode an email goes out only if
   // its recipient is EXACTLY one of the addresses in TEST_ONLY_RECIPIENT (comma separated); a
@@ -388,6 +469,7 @@ exports.handler = async (event) => {
   // In test mode the order itself must come from an allowed address, so an old sandbox order
   // (other customer address) triggers no email at all, not even the admin notice.
   const orderAllowed = !testMode || (typeof clientEmail === 'string' && clientEmail === clientEmail.trim() && allowed.indexOf(clientEmail.toLowerCase()) !== -1);
+  const emailStore = supabaseStore(process.env);
   async function send(kind, payload) {
     if (testMode && !orderAllowed || testMode && !(typeof payload.to === 'string' && allowed.indexOf(payload.to.trim().toLowerCase()) !== -1 && payload.to === payload.to.trim())) {
       skipped.push(kind);
@@ -401,26 +483,27 @@ exports.handler = async (event) => {
       console.log('Test mode: ' + kind + ' email not sent (RESEND_API_KEY_TEST not set)');
       return { ok: true, skipped: true };
     }
-    try {
+    // Durable once-per-(session,kind) guard (table public.email_sends). A definite provider rejection
+    // (HTTP 4xx except 409) marks the attempt failed; anything unclear (network error, 5xx, 409, timeout)
+    // leaves the claim open, and the guard decides what is safe on the next Stripe retry.
+    const transport = { send: async function (idemKey) {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + apiKey,
-          'Content-Type': 'application/json',
-          'Idempotency-Key': kind + '/' + session.id,
-        },
-        body: JSON.stringify({
-          from: payload.from, to: payload.to, reply_to: payload.replyTo,
-          subject: (testMode ? '[TESTE] ' : '') + payload.subject, html: payload.html,
-        }),
+        headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json', 'Idempotency-Key': idemKey },
+        body: JSON.stringify({ from: payload.from, to: payload.to, reply_to: payload.replyTo, subject: (testMode ? '[TESTE] ' : '') + payload.subject, html: payload.html }),
+        signal: AbortSignal.timeout(8000),
       });
       let data = null;
       try { data = await res.json(); } catch (e) { data = null; }
-      if (!res.ok) return { ok: false, why: (data && (data.message || data.name)) || ('http_' + res.status) };
-      return { ok: true, id: data && data.id };
-    } catch (err) {
-      return { ok: false, why: err && err.message ? err.message : 'send_threw' };
-    }
+      if (res.ok) return { ok: true, id: data && data.id };
+      if (res.status >= 400 && res.status < 500 && res.status !== 409) return { ok: false, why: (data && (data.message || data.name)) || ('http_' + res.status) };
+      return { unknown: true };
+    } };
+    const out = await sendOnce(emailStore, kind, session.id, transport);
+    if (out.action === 'sent' || out.action === 'skip' && out.why === 'already_sent') return { ok: true, id: out.id, already: out.why === 'already_sent' };
+    if (out.action === 'skip') { console.error('EMAIL_NEEDS_REVIEW kind=' + kind + ' session=' + session.id + ' why=' + out.why); return { ok: false, why: 'needs_review' }; }
+    if (out.action === 'sent_unmarked') { console.error('EMAIL_SENT_UNMARKED kind=' + kind + ' session=' + session.id); return { ok: false, why: 'sent_unmarked' }; }
+    return { ok: false, why: out.why };
   }
 
   // 1. Recibo ao cliente
@@ -466,4 +549,3 @@ exports.handler = async (event) => {
   };
 };
 
-// redeploy marker: Deploy Previews env updated 2026-11-24 20:36 (RESEND_API_KEY_TEST)
