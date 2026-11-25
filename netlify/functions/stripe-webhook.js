@@ -354,7 +354,7 @@ async function sendOnce(store, kind, sid, transport, now = Date.now()) {
         if (!claimedHere) return { action: 'retry', why: 'lost_reclaim_race' };
       }
     }
-  } catch (e) { return { action: 'retry', why: 'store_error_nothing_sent' }; }   // fail closed
+  } catch (e) { return { action: 'retry', why: 'store_error_nothing_sent:' + String(e && e.message || e).slice(0, 80) }; }   // fail closed
 
   let res;
   try { res = await transport.send(kind + '/' + sid); } catch (e) { res = { unknown: true }; }
@@ -433,6 +433,7 @@ exports.handler = async (event) => {
   const tourName    = session.metadata?.tour_name || session.metadata?.tours || 'Tupi Tour Experience';
 
   const errors = [];
+  const details = {};
 
   // What Stripe settled in BRL for this payment (read only): amount and the rate of the day of payment.
   let bt = null;
@@ -517,7 +518,7 @@ exports.handler = async (event) => {
     });
     if (!r1.ok) {
       console.error('Client receipt not sent:', r1.why);
-      errors.push('client_receipt_failed');
+      errors.push('client_receipt_failed'); details.receipt = r1.why;
     }
   }
 
@@ -531,11 +532,11 @@ exports.handler = async (event) => {
   });
   if (!r2.ok) {
     console.error('Admin notification not sent:', r2.why);
-    errors.push('admin_notification_failed');
+    errors.push('admin_notification_failed'); details.admin = r2.why;
   }
 
   if (errors.length) {
-    return { statusCode: 500, body: JSON.stringify({ received: true, session_id: session.id, errors: errors, retry: true, skipped: skipped.length ? skipped : undefined }) };
+    return { statusCode: 500, body: JSON.stringify({ received: true, session_id: session.id, errors: errors, details: details, retry: true, skipped: skipped.length ? skipped : undefined }) };
   }
 
   return {
