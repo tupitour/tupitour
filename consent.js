@@ -1,13 +1,18 @@
 /* Tupi Tour analytics consent. Google Analytics is not loaded and sets no cookies
    until the visitor clicks Accept. The choice is kept in this browser (localStorage). */
 (function () {
-  var ID = 'G-R9W94NBK2M', KEY = 'tt_analytics_consent';
+  var cs = document.currentScript;
+  var ID = cs && cs.hasAttribute('data-ga') ? cs.getAttribute('data-ga') : 'G-R9W94NBK2M';
+  var ADS = (cs && cs.getAttribute('data-ads')) || '';
+  var KEY = 'tt_analytics_consent';
+  var what = ID && ADS ? 'Google Analytics / Google Ads' : (ADS ? 'Google Ads' : 'Google Analytics');
+  var whatEs = ID && ADS ? 'Google Analytics / Google Ads' : (ADS ? 'Google Ads' : 'Google Analytics');
   var es = /^es/i.test(document.documentElement.lang || '');
   var T = es ? {
-    msg: 'Usamos Google Analytics para entender cómo se usa este sitio. Solo se activa si lo aceptas.',
+    msg: 'Usamos ' + whatEs + ' para entender cómo se usa este sitio. Solo se activa si lo aceptas.',
     yes: 'Aceptar', no: 'Rechazar', pol: 'Política de Privacidad', set: 'Ajustes de cookies', home: '/es/'
   } : {
-    msg: 'We use Google Analytics to understand how this site is used. It only runs if you accept.',
+    msg: 'We use ' + what + ' to understand how this site is used. It only runs if you accept.',
     yes: 'Accept', no: 'Decline', pol: 'Privacy Policy', set: 'Cookie settings', home: '/'
   };
   var noop = function () {};
@@ -22,7 +27,7 @@
   function load() {
     if (loaded) return;
     loaded = true;
-    window['ga-disable-' + ID] = false;
+    if (ID) window['ga-disable-' + ID] = false;
     window.gtag = real;
     gtag('js', new Date());
     var loc, ref;
@@ -34,16 +39,17 @@
       loc = u.origin + u.pathname + (q ? '?' + q : '');
       ref = document.referrer ? new URL(document.referrer).origin + '/' : '';
     } catch (e) { loc = location.origin + location.pathname; ref = ''; }
-    gtag('config', ID, { page_location: loc, page_referrer: ref });
+    if (ID) gtag('config', ID, { page_location: loc, page_referrer: ref });
+    if (ADS) gtag('config', ADS);
     var sc = document.createElement('script');
     sc.async = true;
-    sc.src = 'https://www.googletagmanager.com/gtag/js?id=' + ID;
+    sc.src = 'https://www.googletagmanager.com/gtag/js?id=' + (ID || ADS);
     document.head.appendChild(sc);
   }
 
   function clearCookies() {
     var names = document.cookie.split(';').map(function (c) { return c.split('=')[0].trim(); })
-      .filter(function (n) { return n === '_ga' || n.indexOf('_ga_') === 0 || n === '_gid' || n.indexOf('_gat') === 0; });
+      .filter(function (n) { return n === '_ga' || n.indexOf('_ga_') === 0 || n === '_gid' || n.indexOf('_gcl_') === 0 || n.indexOf('_gac_') === 0 || n.indexOf('_gat') === 0; });
     var host = location.hostname.split('.');
     var domains = ['', location.hostname];
     if (host.length > 2) domains.push('.' + host.slice(-2).join('.'));
@@ -58,7 +64,8 @@
   function accept() { put('granted'); load(); hide(); }
   function decline() {
     put('denied');
-    window['ga-disable-' + ID] = true;
+    if (ID) window['ga-disable-' + ID] = true;
+    if (loaded) window.gtag('consent', 'update', { ad_storage: 'denied', analytics_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
     window.gtag = noop;
     clearCookies();
     hide();
@@ -126,7 +133,7 @@
   }
 
   if (get() === 'granted') load();
-  else if (get() === 'denied') window['ga-disable-' + ID] = true;
+  else if (get() === 'denied' && ID) window['ga-disable-' + ID] = true;
 
   document.addEventListener('DOMContentLoaded', function () {
     footerLink();
