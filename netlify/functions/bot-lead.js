@@ -13,6 +13,8 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const clean = (s, n) => String(s == null ? '' : s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').trim().slice(0, n);
 const json = (code, obj) => ({ statusCode: code, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }, body: JSON.stringify(obj) });
 
+function testPedido(s) { let t = String(s).replace(/^\[TESTE\]\s*/i, '').trim(); if (!/Sem pre\u00e7os\.?$/i.test(t)) t = t.replace(/\.$/, '') + '. Sem pre\u00e7os.'; return t; }
+
 function secretOk(given, expected) {
   if (!expected || expected.length < 24 || typeof given !== 'string') return false;
   const a = crypto.createHash('sha256').update(given).digest();
@@ -69,7 +71,7 @@ async function handle(event, env, f, now) {
 
   const test = /^\[TESTE\]/i.test(summary) && /@example\.com$/.test(email);
   const html = test
-    ? '<div style="font:15px Arial,sans-serif"><p>Este \u00e9 um teste do assistente do site, n\u00e3o \u00e9 um cliente real.</p><p>Nome: ' + esc(name) + '<br>E-mail fict\u00edcio: ' + esc(email) + '<br>Idioma: ' + esc(lang || '?') + '<br>Pedido fict\u00edcio: ' + esc(summary.replace(/^\[TESTE\]\s*/i, '')) + '</p><p>N\u00e3o precisa responder a esse e-mail.</p></div>'
+    ? '<div style="font:15px Arial,sans-serif"><p>Este \u00e9 um teste do assistente do site, n\u00e3o \u00e9 um cliente real.</p><p>Nome: ' + esc(name) + '<br>E-mail fict\u00edcio: ' + esc(email) + '<br>Idioma: ' + esc(/^(pt|portugu[e\u00ea]s)$/i.test(lang) ? 'portugu\u00eas' : (lang || '?')) + '<br>Pedido fict\u00edcio: ' + esc(testPedido(summary)) + '</p><p>N\u00e3o precisa responder a esse e-mail.</p></div>'
     : '<div style="font:15px Arial,sans-serif"><p>Novo contato pelo assistente do site.</p><p><b>Nome:</b> ' + esc(name) + '<br><b>E-mail:</b> ' + esc(email) + '<br><b>Idioma:</b> ' + esc(lang || '?') + '</p><p><b>Resumo:</b><br>' + esc(summary).replace(/\n/g, '<br>') + '</p><p style="color:#777">O visitante concordou em enviar estes dados a voc\u00ea. Responda a ele pelo e-mail acima (reply-to).</p></div>';
   const payload = { from: FROM, to: [TO], subject: (test ? '[TESTE] ' : '') + 'Novo contato do assistente Tupi Tour', html };
   if (!test) payload.reply_to = email;
