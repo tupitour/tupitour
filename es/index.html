@@ -1045,6 +1045,11 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
   transition: color 0.15s;
 }
 .cart-item-remove:hover { color: var(--dark); }
+/* cart legal block: keep the drawer clear of the cookie notice and scrollable */
+.cart-items { min-height: 110px; }
+.cart-footer { max-height: 58%; overflow-y: auto; }
+body:has(> div[style*="2147483000"]) .cart-panel { bottom: 80px; }
+@media (max-width: 600px) { body:has(> div[style*="2147483000"]) .cart-panel { bottom: 140px; } }
 .cart-footer {
   padding: 1.25rem 1.75rem;
   border-top: 1px solid var(--border);
@@ -3813,7 +3818,7 @@ var TOUR_CAROUSELS = {
     </div>
     <p class="cart-note">Confirmación en 24 h &middot; Tarjeta &middot; Wise &middot; Revolut</p>
     <p class="cart-note" style="margin-top:0.35rem;font-size:0.68rem;color:var(--light);">Los pagos con tarjeta los procesa Stripe en dólares estadounidenses (USD). El monto en USD que ves aquí es el que se cobra. Si tu tarjeta está en otra moneda, tu banco puede convertir el cargo con su propia tasa.</p>
-    <p class="cart-note" style="margin-top:0.75rem;font-size:0.8rem;line-height:1.5;color:#444;text-align:left;max-height:40vh;overflow-y:auto;"><strong>Derecho de arrepentimiento</strong> Según el artículo 49 del Código de Defensa del Consumidor de Brasil (Ley n.º 8.078/1990), cuando el contrato se celebra fuera del establecimiento comercial, incluso en línea, el consumidor puede desistir del contrato dentro de los 7 días contados desde su firma o desde la recepción del servicio. Si ejerce este derecho, los valores pagados durante ese plazo se devuelven de inmediato, con actualización monetaria. Para ejercer este derecho, responde al correo de confirmación de tu reserva o escríbenos por WhatsApp.</p>
+    <p class="cart-note" style="margin-top:0.75rem;font-size:0.8rem;line-height:1.5;color:#444;text-align:left;"><strong>Derecho de arrepentimiento</strong> Según el artículo 49 del Código de Defensa del Consumidor de Brasil (Ley n.º 8.078/1990), cuando el contrato se celebra fuera del establecimiento comercial, incluso en línea, el consumidor puede desistir del contrato dentro de los 7 días contados desde su firma o desde la recepción del servicio. Si ejerce este derecho, los valores pagados durante ese plazo se devuelven de inmediato, con actualización monetaria. Para ejercer este derecho, responde al correo de confirmación de tu reserva o escríbenos por WhatsApp.</p>
   </div>
 </div>
 
