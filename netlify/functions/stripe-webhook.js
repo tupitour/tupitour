@@ -240,6 +240,7 @@ ${items.length && String(session.currency).toLowerCase() === 'usd' ? totalsRows(
                 </li>
                 <li>${tr(lang, 'next3') || 'Please keep this email as your receipt.'}</li>
               </ul>
+              ${lang === 'en' ? `<p style="margin:16px 0 0;color:#555555;font-size:13px;line-height:1.6;"><strong>Right of withdrawal.</strong> Under article 49 of the Brazilian Consumer Defense Code (Law No. 8,078/1990), you may withdraw from this contract within 7 days from signing it or from receiving the service. To exercise this right, reply to this email or message us on WhatsApp. Our Terms of Use are at the bottom of <a href="https://tupitour.com/" style="color:#1B7A3E;text-decoration:none;">https://tupitour.com/</a></p>` : ''}
             </td>
           </tr>
 
