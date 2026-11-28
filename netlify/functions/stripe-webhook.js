@@ -80,7 +80,7 @@ function totalsRows(items, session, extra, lang) {
   return row(T('Order total'), usd(f.total)) + row(T('Paid'), usd(f.paid)) + (f.remaining > 0 ? row(T('Remaining, due on the day of the tour'), usd(f.remaining), true) : row(T('Status'), T('Paid in full'), true)) + (extra || '');
 }
 
-function buildItemRows(items, lines, currency, lang) {
+function buildItemRows(items, lines, currency, lang, internal) {
   const T = function(k) { return tr(lang, k) || k; };
   return items.map(function(it, idx) {
     const line = lines && lines[idx];
@@ -93,6 +93,8 @@ function buildItemRows(items, lines, currency, lang) {
       it.pd && it.pd.length ? [T('Partner guide'), lang === 'es' ? tr(lang, 'partner', esc(it.pd.join(', '))) : 'Tupi Tour may assign a partner guide for ' + esc(it.pd.join(', ')) + '. We will confirm who will lead your tour.'] : null,
       it.t ? [T('Time'), it.t] : null,
       it.g ? [T('Group size'), it.g] : null,
+      internal ? ['Travelers under 21', (it.a21 === null || it.a21 === undefined) ? 'not provided' : String(it.a21)] : null,
+      internal ? ['Travelers over 60', (it.a60 === null || it.a60 === undefined) ? 'not provided' : String(it.a60)] : null,
       it.lp ? [T('Tour price'), usd(it.lp)] : null,
       it.p === 'full' && it.lp && Number(it.lp) > Number(it.u) ? [T('Full-payment discount (10%)'), '\u2212' + usd(Number(it.lp) - Number(it.u))] : null,
       it.p === 'full' ? [it.lp ? T('Paid in full') : T('Amount paid'), usd(it.u)] : null,
@@ -296,7 +298,7 @@ function buildAdminNotificationHtml(session, lines, bt) {
     <table cellpadding="6" cellspacing="0" style="width:100%;font-size:14px;color:#333;">
       <tr><td style="color:#888;width:35%;">Client</td><td><strong>${clientName}</strong></td></tr>
       <tr><td style="color:#888;">Email</td><td><a href="mailto:${clientEmail}">${clientEmail}</a></td></tr>
-${items.length ? `      <tr><td colspan="2" style="padding:0;"><table cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #E5E3DE;">${buildItemRows(items, lines, currency)}</table></td></tr>
+${items.length ? `      <tr><td colspan="2" style="padding:0;"><table cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #E5E3DE;">${buildItemRows(items, lines, currency, undefined, true)}</table></td></tr>
 ${String(session.currency).toLowerCase() === 'usd' ? '<tr><td colspan="2" style="padding:0;"><table cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #E5E3DE;">' + totalsRows(items, session, bt && typeof bt.amount === 'number' ? '<tr style="border-top:1px solid #E5E3DE;"><td style="padding:12px 16px;font-size:13px;color:#555555;">Settled in BRL</td><td style="padding:12px 16px;font-size:14px;color:#111111;">R$ ' + (bt.amount / 100).toFixed(2) + (bt.exchange_rate ? '<div style="font-size:11px;color:#777777;">USD 1 = R$ ' + Number(bt.exchange_rate).toFixed(4) + ' on the day of payment, before Stripe fees</div>' : '') + '</td></tr>' : '<tr style="border-top:1px solid #E5E3DE;"><td style="padding:12px 16px;font-size:13px;color:#555555;">Settled in BRL</td><td style="padding:12px 16px;font-size:13px;color:#777777;">Not available yet</td></tr>') + '</table></td></tr>' : `      <tr><td style="color:#888;">Total paid</td><td><strong style="color:#1B7A3E;">${pres ? pres.presentment_currency.toUpperCase() + ' ' + (pres.presentment_amount / 100).toFixed(2) : currency + ' ' + amount}</strong>${pres ? '<div style="font-size:11px;color:#777;">Settled by Stripe: ' + currency + ' ' + amount + '. Cart price: USD ' + items.reduce(function(t, x) { return t + (Number(x.u) || 0); }, 0) + '.</div>' : ''}</td></tr>
 `}
 ` : `      <tr><td style="color:#888;">Tour</td><td>${tourName}</td></tr>

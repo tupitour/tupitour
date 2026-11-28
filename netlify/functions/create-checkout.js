@@ -50,9 +50,24 @@ function allowedPrices(name, group) {
   return { deposit: 30 * days, full: Math.round(base * days * 0.9) };
 }
 
+// Age ranges: travelers under 21 and over 60. Optional only for older cached pages that do not send them;
+// when sent, both must be whole numbers from 0 up to the group size, and together no more than the group size.
+function validateAges(item) {
+  const hasU = item.under21 !== undefined && item.under21 !== null;
+  const hasO = item.over60 !== undefined && item.over60 !== null;
+  if (!hasU && !hasO) return null;
+  if (!hasU || !hasO) return 'Invalid age ranges';
+  const g = /^[1-4]$/.test(String(item.group)) ? Number(item.group) : 0;
+  if (!g || !Number.isInteger(item.under21) || !Number.isInteger(item.over60)) return 'Invalid age ranges';
+  if (item.under21 < 0 || item.over60 < 0 || item.under21 + item.over60 > g) return 'Invalid age ranges';
+  return null;
+}
+
 function validateItems(items) {
   for (const item of items) {
     if (!item || typeof item.name !== 'string') return 'Invalid item';
+    const ageError = validateAges(item);
+    if (ageError) return ageError;
     if (typeof TOUR_PRICES[item.name] !== 'number') return 'Unknown tour';
     const allowed = allowedPrices(item.name, item.group);
     if (!allowed) return 'Invalid group size';
@@ -173,7 +188,7 @@ exports.handler = async function(event) {
     const taken = blockedSet && i.date && i.date !== 'Flexible dates (TBC)'
       ? i.date.split(',').map(function(s) { return s.trim(); }).filter(function(d) { return blockedSet.has(d); })
       : [];
-    itemMeta['item_' + (idx + 1)] = metaText(JSON.stringify({ n: i.name, d: i.date || '', t: i.time || '', g: i.group || '', p: i.paymentType || '', u: i.price, l: i.priceLabel || '', pd: taken, lp: (basePriceFor(i.name, i.group) || 0) * (MULTI_DAY_TOURS[i.name] || 1) }));
+    itemMeta['item_' + (idx + 1)] = metaText(JSON.stringify({ n: i.name, d: i.date || '', t: i.time || '', g: i.group || '', p: i.paymentType || '', u: i.price, l: i.priceLabel || '', pd: taken, lp: (basePriceFor(i.name, i.group) || 0) * (MULTI_DAY_TOURS[i.name] || 1), a21: Number.isInteger(i.under21) ? i.under21 : null, a60: Number.isInteger(i.over60) ? i.over60 : null }));
   });
 
   try {
@@ -220,4 +235,4 @@ exports.handler = async function(event) {
   }
 };
 
-exports._test = { validateItems, allowedPrices, basePriceFor };
+exports._test = { validateItems, validateAges, allowedPrices, basePriceFor };
