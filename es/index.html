@@ -2587,7 +2587,7 @@ function sendConfirmationEmail(method) {
 
   // Email to Flávio
   var itemLines = cart.map(function(item) {
-    return item.name + ' | ' + (item.date || 'Flexible') + (item.time ? ' ' + item.time : '') + ' | ' + item.group + ' pax | ' + item.priceLabel;
+    return item.name + ' | ' + (item.date || 'Flexible') + (item.time ? ' ' + item.time : '') + ' | ' + item.group + ' pax | travelers under 21: ' + item.under21 + ' | over 60: ' + item.over60 + ' | ' + item.priceLabel;
   }).join('\n');
   var subFlavio = encodeURIComponent('New booking — ' + cart.map(function(i){return i.name;}).join(', '));
   var bodyFlavio = encodeURIComponent(
@@ -2627,7 +2627,9 @@ async function checkout() {
       paymentType: item.paymentType || '',
       date: item.date || '',
       time: item.time || '',
-      group: item.group || ''
+      group: item.group || '',
+      under21: item.under21,
+      over60: item.over60
     };
   });
 
@@ -2858,9 +2860,32 @@ function setupGroupPick() {
   }
 }
 
+// Age ranges asked at booking: travelers under 21 (<21) and over 60 (>60). Empty until the guest answers; 0 is an explicit answer.
+function refreshAgeOptions(reset) {
+  var g = selectedGroupSize();
+  ['calUnder21', 'calOver60'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var keep = reset ? '' : el.value;
+    el.innerHTML = '';
+    var ph = document.createElement('option');
+    ph.value = '';
+    ph.textContent = 'Elegir';
+    el.appendChild(ph);
+    for (var n = 0; n <= g; n++) {
+      var op = document.createElement('option');
+      op.value = String(n);
+      op.textContent = String(n);
+      el.appendChild(op);
+    }
+    el.value = (keep !== '' && parseInt(keep, 10) <= g) ? keep : '';
+  });
+}
+
 function onGroupPick(v) {
   var el = document.getElementById('calGroup');
   if (el) el.value = v;
+  refreshAgeOptions(false);
   refreshPaymentAmounts();
 }
 
@@ -2907,6 +2932,7 @@ async function openCalendar(tourName) {
   if (staleMsg) staleMsg.style.display = 'none';
   var grpEl = document.getElementById('calGroup');
   if (grpEl) grpEl.value = '1';
+  refreshAgeOptions(true);
   var now = new Date();
   calYear = now.getFullYear();
   calMonth = now.getMonth();
@@ -3210,6 +3236,12 @@ function submitBooking() {
   var name = document.getElementById('calName').value.trim();
   var email = document.getElementById('calEmail').value.trim();
   var group = document.getElementById('calGroup').value;
+  var under21Raw = document.getElementById('calUnder21').value;
+  var over60Raw = document.getElementById('calOver60').value;
+  if (under21Raw === '' || over60Raw === '') { alert('Indica cuántos viajeros son menores de 21 y mayores de 60 (elige 0 si ninguno).'); return; }
+  var under21 = parseInt(under21Raw, 10);
+  var over60 = parseInt(over60Raw, 10);
+  if (under21 + over60 > parseInt(group, 10)) { alert('El número de viajeros menores de 21 y mayores de 60 no puede ser mayor que el tamaño del grupo.'); return; }
   var message = document.getElementById('calMessage') ? document.getElementById('calMessage').value.trim() : '';
   var errorEl = document.getElementById('calEmailError');
 
@@ -3253,6 +3285,8 @@ function submitBooking() {
     date: dateLabel,
     time: timeLabel,
     group: group,
+    under21: under21,
+    over60: over60,
     guestName: name,
     guestEmail: email,
     message: message,
@@ -3909,12 +3943,19 @@ var TOUR_CAROUSELS = {
         <div id="calEmailError" style="display:none;font-size:0.72rem;color:#c0392b;margin-top:-0.4rem;">Ingresa un correo electrónico válido.</div>
         <div class="cal-field">
           <label>Tamaño del grupo</label>
-          <select id="calGroup">
+          <select id="calGroup" onchange="refreshAgeOptions(false)">
             <option value="1">1 persona</option>
             <option value="2">2 personas</option>
             <option value="3">3 personas</option>
             <option value="4">4 personas</option>
           </select>
+        </div>
+        <div class="cal-field" id="calAgeField">
+          <label>Rangos de edad (¿cuántos viajeros?)</label>
+          <div style="display:flex;gap:0.6rem;">
+            <div style="flex:1;min-width:0;"><div style="font-size:0.72rem;color:var(--mid);margin-bottom:0.25rem;">Viajeros menores de 21 años</div><select id="calUnder21" aria-label="Viajeros menores de 21 años" style="width:100%;padding:0.75rem 0.85rem;"></select></div>
+            <div style="flex:1;min-width:0;"><div style="font-size:0.72rem;color:var(--mid);margin-bottom:0.25rem;">Viajeros mayores de 60 años</div><select id="calOver60" aria-label="Viajeros mayores de 60 años" style="width:100%;padding:0.75rem 0.85rem;"></select></div>
+          </div>
         </div>
         <div class="cal-field">
           <label>¿Algo que quieras que sepamos? (opcional)</label>
