@@ -1045,6 +1045,11 @@ h1          { animation: fadeUp 0.5s 0.1s both; }
   transition: color 0.15s;
 }
 .cart-item-remove:hover { color: var(--dark); }
+/* cart legal block: keep the drawer clear of the cookie notice and scrollable */
+.cart-items { min-height: 110px; }
+.cart-footer { max-height: 58%; overflow-y: auto; }
+body:has(> div[style*="2147483000"]) .cart-panel { bottom: 80px; }
+@media (max-width: 600px) { body:has(> div[style*="2147483000"]) .cart-panel { bottom: 140px; } }
 .cart-footer {
   padding: 1.25rem 1.75rem;
   border-top: 1px solid var(--border);
@@ -3812,7 +3817,7 @@ var TOUR_CAROUSELS = {
     </div>
     <p class="cart-note">Confirmation within 24h &middot; Card &middot; Wise &middot; Revolut</p>
     <p class="cart-note" style="margin-top:0.35rem;font-size:0.68rem;color:var(--light);">Card payments are processed by Stripe in US dollars (USD). The USD amount shown here is the amount charged. If your card is in another currency, your bank may convert the charge at its own rate.</p>
-    <p class="cart-note" style="margin-top:0.75rem;font-size:0.8rem;line-height:1.5;color:#444;text-align:left;max-height:40vh;overflow-y:auto;"><strong>Right of withdrawal</strong> Under article 49 of the Brazilian Consumer Defense Code (Law No. 8,078/1990), when a contract is made outside the seller's premises, including online, the consumer may withdraw from the contract within 7 days from signing it or from receiving the service. If the consumer exercises this right, amounts paid during that period are refunded immediately, adjusted for inflation. To exercise this right, reply to your booking confirmation email or message us on WhatsApp.</p>
+    <p class="cart-note" style="margin-top:0.75rem;font-size:0.8rem;line-height:1.5;color:#444;text-align:left;"><strong>Right of withdrawal</strong> Under article 49 of the Brazilian Consumer Defense Code (Law No. 8,078/1990), when a contract is made outside the seller's premises, including online, the consumer may withdraw from the contract within 7 days from signing it or from receiving the service. If the consumer exercises this right, amounts paid during that period are refunded immediately, adjusted for inflation. To exercise this right, reply to your booking confirmation email or message us on WhatsApp.</p>
   </div>
 </div>
 
