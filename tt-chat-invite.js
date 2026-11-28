@@ -7,9 +7,9 @@
   var closed = false; try { closed = !!localStorage.getItem(KEY); } catch (e) {}
   var l = (document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
   var TX = {
-    pt: ['Quer ajuda para escolher seu passeio no Rio?', 'Conversar', 'Assistente virtual (IA). Suas mensagens são processadas pela Botpress, em geral nos EUA. Não escreva dados sensíveis.', 'Política de Privacidade', '/#privacy', 'Fechar'],
-    es: ['¿Quieres ayuda para elegir tu tour en Río?', 'Chatear', 'Asistente virtual (IA). Tus mensajes son procesados por Botpress, por lo general en EE. UU. No escribas datos sensibles.', 'Política de Privacidad', '/es/#privacy', 'Cerrar'],
-    en: ['Want help choosing your Rio tour?', 'Chat', 'Virtual assistant (AI). Your messages are processed by Botpress, generally in the US. Do not type sensitive data.', 'Privacy Policy', '/#privacy', 'Close']
+    pt: ['Passeios guiados no Rio ou viagem pelo Brasil? Fale com nosso assistente.', 'Conversar', 'Assistente virtual (IA). Suas mensagens são processadas pela Botpress, em geral nos EUA. Não escreva dados sensíveis.', 'Política de Privacidade', '/#privacy', 'Fechar'],
+    es: ['¿Tours guiados en Río o un viaje por Brasil? Habla con nuestro asistente.', 'Chatear', 'Asistente virtual (IA). Tus mensajes son procesados por Botpress, por lo general en EE. UU. No escribas datos sensibles.', 'Política de Privacidad', '/es/#privacy', 'Cerrar'],
+    en: ['Guided tours in Rio or a trip across Brazil? Talk to our assistant.', 'Chat', 'Virtual assistant (AI). Your messages are processed by Botpress, generally in the US. Do not type sensitive data.', 'Privacy Policy', '/#privacy', 'Close']
   };
   var T = TX[l] || TX.en;
   var FONT = 'system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
