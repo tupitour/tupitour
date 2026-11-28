@@ -21,7 +21,7 @@ function secretOk(given, expected) {
 }
 
 function store(env, f) {
-  const base = String(env.SUPABASE_URL || '').replace(/\/+$/, '') + '/rest/v1/email_sends';
+  const base = String(env.SUPABASE_URL || '').replace(/\/+$/, '') + '/rest/v1/bot_lead_sends';
   const key = env.SUPABASE_SERVICE_KEY;
   const H = (x) => Object.assign({ apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' }, x || {});
   const call = async (url, init) => { const r = await f(url, Object.assign({ signal: AbortSignal.timeout(5000) }, init)); if (!r.ok) throw new Error('store_http_' + r.status); return r.json(); };
@@ -65,7 +65,7 @@ async function handle(event, env, f, now) {
     let slot = null;
     for (let i = 1; i <= DAILY_CAP; i++) { const sid = 'lead-day-' + day + '-' + i; if (await claim(st, sid, now)) { slot = sid; claimed.push(sid); break; } }
     if (!slot) { await release(st, claimed, 'cap'); return json(429, { ok: false, error: 'daily_cap' }); }
-  } catch (e) { await release(st, claimed, 'store_error'); return json(503, { ok: false, error: 'store_error' }); }
+  } catch (e) { console.log('bot-lead store error: ' + String(e && e.message).slice(0, 60)); await release(st, claimed, 'store_error'); return json(503, { ok: false, error: 'store_error' }); }
 
   const test = /^\[TESTE\]/i.test(summary) && /@example\.com$/.test(email);
   const html = test
